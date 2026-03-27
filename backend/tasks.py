@@ -6,7 +6,7 @@ import httpx
 from datetime import datetime, timezone
 from celery import Celery
 
-from config import settings
+from config import settings, get_scan_mode
 from database import SessionLocal
 from models import Agent, ScanResult, ScanStatus, AlertConfig
 from alerting import send_alert_sync
@@ -68,7 +68,7 @@ def run_scan(self, agent_id: str, triggered_by: str = "manual"):
             "bedrock_guardrail_id": agent.bedrock_guardrail_id,
             "mcp_servers": agent.mcp_servers or [],
             "allowed_tools": agent.allowed_tools or [],
-            "mock_scan": settings.MOCK_SCAN,
+            "mock_scan": get_scan_mode() == "mock",
         }
 
         try:

@@ -13,7 +13,7 @@ from database import get_db, init_db
 from models import Agent, ScanResult, GuardrailEvent, AlertConfig, ScanStatus, SeverityLevel
 from tasks import trigger_scan_task
 from alerting import send_alert
-from config import settings
+from config import settings, get_scan_mode, set_scan_mode
 from galactus import galactus as galactus_engine
 from auth import (
     auth_middleware, auth_status, create_token, verify_password,
@@ -610,6 +610,36 @@ def settings_platform():
         "jwt_expire_minutes": settings.JWT_EXPIRE_MINUTES,
         "version": "1.0.0",
     }
+
+
+class ScanModeRequest(BaseModel):
+    mode: str  # 'mock' | 'promptfoo' | 'nemo'
+
+
+@app.get("/api/v1/settings/scan-mode", summary="Current scan engine mode")
+def settings_get_scan_mode():
+    mode = get_scan_mode()
+    return {
+        "mode": mode,
+        "mock_scan": mode == "mock",
+        "label": {
+            "mock":      "Mock Scan — 46 direct probes, no API keys required",
+            "promptfoo": "Promptfoo Full Scan — 50+ LLM-generated red-team attacks",
+            "nemo":      "NeMo Guardrails — structured rails evaluation via NeMo agent",
+        }.get(mode, mode),
+    }
+
+
+@app.post("/api/v1/settings/scan-mode", summary="Update scan engine mode at runtime")
+def settings_set_scan_mode(req: ScanModeRequest):
+    valid = ("mock", "promptfoo", "nemo")
+    if req.mode not in valid:
+        raise HTTPException(status_code=400, detail=f"mode must be one of {valid}")
+    try:
+        set_scan_mode(req.mode)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    return {"mode": req.mode, "ok": True}
 
 
 @app.get("/api/v1/settings/thresholds", summary="Current gate threshold values")

@@ -71,3 +71,47 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# ── Runtime scan mode override (Redis-backed) ─────────────────────────────────
+# Allows switching between 'mock', 'promptfoo', and 'nemo' at runtime without
+# restarting containers. Stored in Redis so both API and worker pick it up.
+
+_SCAN_MODE_KEY = "watchtower:scan_mode"
+_VALID_SCAN_MODES = ("mock", "promptfoo", "nemo")
+
+
+def _get_redis():
+    """Lazy Redis client for runtime overrides; returns None on any failure."""
+    try:
+        import redis as _r
+        return _r.from_url(
+            settings.CELERY_BROKER_URL,
+            decode_responses=True,
+            socket_connect_timeout=1,
+            socket_timeout=1,
+        )
+    except Exception:
+        return None
+
+
+def get_scan_mode() -> str:
+    """Return active scan mode: 'mock', 'promptfoo', or 'nemo'.
+    Checks Redis runtime override first; falls back to MOCK_SCAN env var."""
+    try:
+        rc = _get_redis()
+        if rc:
+            mode = rc.get(_SCAN_MODE_KEY)
+            if mode in _VALID_SCAN_MODES:
+                return mode
+    except Exception:
+        pass
+    return "mock" if settings.MOCK_SCAN else "promptfoo"
+
+
+def set_scan_mode(mode: str) -> None:
+    """Persist scan mode override to Redis (survives API restarts until Redis flush)."""
+    if mode not in _VALID_SCAN_MODES:
+        raise ValueError(f"Invalid scan mode '{mode}' — must be one of {_VALID_SCAN_MODES}")
+    rc = _get_redis()
+    if rc:
+        rc.set(_SCAN_MODE_KEY, mode)
