@@ -143,3 +143,96 @@ NeMo Guardrails events forward automatically via `nemo_bridge.py` — no extra c
 | Insecure Output | LLM05 | 5 — XSS, cookie theft, `javascript:` injection |
 | MCP Poisoning | LLM03 | auto — scans tool descriptions for embedded instructions |
 | Misinformation | LLM09 | 4 — false authority, phishing pretext |
+
+---
+
+## Promptfoo — full red-team mode
+
+Watchtower's scanner has two modes, controlled by the `MOCK_SCAN` setting:
+
+| Mode | How it works | When to use |
+|---|---|---|
+| `MOCK_SCAN=true` (default) | 46 direct HTTP probes sent to the agent endpoint. No API keys needed, completes in ~15 sec. | Local dev, CI pipelines, demo |
+| `MOCK_SCAN=false` | Full [Promptfoo](https://promptfoo.dev) red-team suite — 50+ LLM-generated attack categories, full OWASP LLM Top 10. Requires AWS Bedrock or OpenAI credentials. | Pre-production gate, security audits |
+
+In full mode, Promptfoo generates novel attack variants using a red-team LLM, going beyond fixed probe patterns to find model-specific weaknesses. Results from both modes feed the same scoring pipeline and gate decision.
+
+**To run a full Promptfoo scan against any agent:**
+
+```bash
+# Set scan mode in .env
+MOCK_SCAN=false
+
+# Trigger via API (scan queues automatically on agent registration)
+curl -X POST http://<watchtower>/api/v1/agents/<id>/scans \
+  -H "Authorization: Bearer <token>"
+```
+
+The scanner service (`scanner/scanner.js`) calls `promptfoo redteam run` internally, normalises results to Watchtower's OWASP categories, and streams findings back to the worker for gate evaluation.
+
+---
+
+## NeMo Guardrails — runtime protection
+
+NeMo Guardrails provides COLANG-based dialog rails that sit in front of the LLM on every request. Watchtower ships a drop-in bridge (`backend/nemo_bridge.py`) that automatically forwards every activated rail as a runtime security event to the dashboard.
+
+### Demo agent rails (`demo/nemo-agent/`)
+
+The included Fleet Safety Agent uses five rails defined in `guardrails/colang/fleet_safety.co`:
+
+| Rail | Type | What it catches |
+|---|---|---|
+| `check jailbreak` | input | "ignore your instructions", DAN, "act as an AI without restrictions" |
+| `check system prompt extraction` | input | "reveal your system prompt", "repeat everything above" |
+| `check off topic` | input | Requests outside fleet/driver/telematics scope |
+| `check no confidential data` | output | Intercepts confidential data before it reaches the user |
+| `check no harmful content` | output | Intercepts policy-violating output |
+
+**Config** (`guardrails/config.yml`):
+```yaml
+models:
+  - type: main
+    engine: litellm
+    model: bedrock/anthropic.claude-3-haiku-20240307-v1:0
+
+rails:
+  input:
+    flows:
+      - check jailbreak
+      - check system prompt extraction
+      - check off topic
+  output:
+    flows:
+      - check no confidential data
+      - check no harmful content
+```
+
+### Adding NeMo Guardrails to your own agent
+
+Replace `LLMRails` with `WatchtowerRails` — one import change, events flow automatically:
+
+```python
+from nemo_bridge import WatchtowerRails
+
+rails = WatchtowerRails.from_path(
+    config_path="./guardrails/my-agent/",
+    agent_id="<watchtower-agent-id>",    # from dashboard or GET /api/v1/agents
+    watchtower_url="http://watchtower:8000",
+)
+
+# async (FastAPI)
+response = await rails.safe_generate(messages=[{"role": "user", "content": user_input}])
+
+# sync (Flask, scripts)
+response = rails.safe_generate_sync(messages=[{"role": "user", "content": user_input}])
+```
+
+Every activated rail maps to a Watchtower event automatically:
+
+| NeMo rail | Watchtower `event_type` | `severity` |
+|---|---|---|
+| `input / check jailbreak` | `prompt_injection` | high |
+| `input / detect pii` | `pii` | medium |
+| `retrieval / check retrieval` | `prompt_injection` | high — indirect injection |
+| `execution / check execution` | `excessive_agency` | high |
+| `output / self check output` | `content_violation` | medium |
