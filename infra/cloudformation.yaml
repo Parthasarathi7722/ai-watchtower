@@ -76,13 +76,11 @@ Parameters:
 
   GalactusModelId:
     Type: String
-    Default: us.anthropic.claude-sonnet-4-6
+    Default: anthropic.claude-3-haiku-20240307-v1:0
     Description: >
       Bedrock model ID for Galactus analytics (bedrock mode only).
-      Cross-region inference profiles (us.anthropic.*) require Cross-Region
-      Inference to be enabled in Bedrock Console. If you see "model not found"
-      errors, switch to a direct on-demand ID such as
-      anthropic.claude-3-5-sonnet-20241022-v2:0 which works without that setting.
+      Default is Claude 3 Haiku — confirmed working on on-demand throughput
+      without cross-region inference profiles.
       Ignored when GalactusMode=agentcore.
 
   GalactusAgentId:
@@ -125,7 +123,6 @@ Conditions:
   IsAgentCoreMode: !Equals [!Ref GalactusMode, "agentcore"]
   HasGuardrail: !Not [!Equals [!Ref BedrockGuardrailId, ""]]
   UseSecretsManagerAuth: !Equals [!Ref AuthMode, "secrets_manager"]
-  UseFullCompose: !Equals [!Ref MockScan, "false"]
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Resources
@@ -197,7 +194,7 @@ Resources:
         - { IpProtocol: tcp, FromPort: 8000, ToPort: 8000, CidrIp: "0.0.0.0/0", Description: "Watchtower API - open for CloudFront origin" }
         - { IpProtocol: tcp, FromPort: 3000, ToPort: 3000, CidrIp: !Ref AllowedCidr, Description: Grafana }
         - { IpProtocol: tcp, FromPort: 5555, ToPort: 5555, CidrIp: !Ref AllowedCidr, Description: "Flower Task Monitor" }
-        - { IpProtocol: tcp, FromPort: 4000, ToPort: 4011, CidrIp: !Ref AllowedCidr, Description: "Demo Agents (4000-4011)" }
+        - { IpProtocol: tcp, FromPort: 4000, ToPort: 4013, CidrIp: !Ref AllowedCidr, Description: "Demo Agents (4000-4013: mock, bedrock, nemo, route-optimizer)" }
       Tags:
         - Key: Name
           Value: !Sub "${AWS::StackName}-sg"
@@ -524,13 +521,12 @@ Resources:
             echo "MISINFORMATION_THRESHOLD=10"                   >> "$ENV_FILE"
 
             # ── Start stack ───────────────────────────────────────────────────
-            if [ "${MockScan}" = "false" ]; then
-              docker compose -f docker-compose.yml \
-                             -f demo/docker-compose.demo.yml \
-                             up -d --build
-            else
-              docker compose up -d --build
-            fi
+            # Always include demo agents (nemo-agent :4012, route-optimizer :4013,
+            # bedrock-agent :4010, vulnerable-agent :4011) — they use IAM role
+            # credentials and work regardless of MockScan mode.
+            docker compose -f docker-compose.yml \
+                           -f demo/docker-compose.demo.yml \
+                           up -d --build
 
             # ── Wait for API ──────────────────────────────────────────────────
             echo "Waiting for Watchtower API to be ready (up to 20 min)..."
@@ -626,11 +622,19 @@ Outputs:
 
   SafeAgentEndpoint:
     Value: !Sub "http://${WatchtowerInstance.PublicIp}:4010/health"
-    Description: Demo safe agent health check — direct HTTP
+    Description: Bedrock safe agent (Guardrails ON) — direct HTTP
 
   VulnerableAgentEndpoint:
     Value: !Sub "http://${WatchtowerInstance.PublicIp}:4011/health"
-    Description: Demo vulnerable agent health check — direct HTTP
+    Description: Bedrock vulnerable agent (no guardrails) — direct HTTP
+
+  NemoAgentEndpoint:
+    Value: !Sub "http://${WatchtowerInstance.PublicIp}:4012/health"
+    Description: NeMo Guardrails fleet safety agent (PASS expected) — direct HTTP
+
+  RouteOptimizerEndpoint:
+    Value: !Sub "http://${WatchtowerInstance.PublicIp}:4013/health"
+    Description: Vulnerable route optimizer (FAIL expected) — direct HTTP
 
   SSHCommand:
     Value: !Sub "ssh -i ~/.ssh/${KeyPairName}.pem ec2-user@${WatchtowerInstance.PublicIp}"

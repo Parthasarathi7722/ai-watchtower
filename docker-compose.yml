@@ -79,7 +79,7 @@ services:
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
       # Galactus AI Security Intelligence Agent
       GALACTUS_MODE: ${GALACTUS_MODE:-bedrock}
-      GALACTUS_MODEL_ID: ${GALACTUS_MODEL_ID:-us.anthropic.claude-sonnet-4-6}
+      GALACTUS_MODEL_ID: ${GALACTUS_MODEL_ID:-anthropic.claude-3-haiku-20240307-v1:0}
       GALACTUS_AGENT_ID: ${GALACTUS_AGENT_ID:-}
       GALACTUS_AGENT_ALIAS_ID: ${GALACTUS_AGENT_ALIAS_ID:-}
       # Gate thresholds — override via .env (see .env.example for all options)
