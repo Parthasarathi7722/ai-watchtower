@@ -1,187 +1,113 @@
-<svg viewBox="0 0 920 500" xmlns="http://www.w3.org/2000/svg" font-family="'Segoe UI', Arial, sans-serif">
+<svg viewBox="0 0 720 440" xmlns="http://www.w3.org/2000/svg" font-family="Arial, sans-serif">
 
   <defs>
-    <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L8,3 z" fill="#475569"/>
+    <marker id="a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#64748b"/>
     </marker>
-    <marker id="arr-b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L8,3 z" fill="#3b82f6"/>
+    <marker id="ag" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#16a34a"/>
     </marker>
-    <marker id="arr-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L8,3 z" fill="#22c55e"/>
-    </marker>
-    <marker id="arr-r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L8,3 z" fill="#ef4444"/>
+    <marker id="ar" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#dc2626"/>
     </marker>
   </defs>
 
-  <!-- Background -->
-  <rect width="920" height="500" fill="#0f172a" rx="14"/>
+  <!-- background -->
+  <rect width="720" height="440" fill="#f8fafc" rx="10"/>
 
-  <!-- Title -->
-  <rect x="20" y="14" width="880" height="42" rx="8" fill="#1e3a5f"/>
-  <text x="460" y="41" text-anchor="middle" fill="white" font-size="16" font-weight="700" letter-spacing="0.5">AI Watchtower — Securing Lytx Fleet AI</text>
+  <!-- title -->
+  <rect x="10" y="10" width="700" height="36" rx="6" fill="#1e293b"/>
+  <text x="360" y="33" text-anchor="middle" fill="white" font-size="14" font-weight="bold">AI Watchtower — Securing Lytx Fleet AI</text>
 
-  <!-- ── LYTX AGENTS (top row) ─────────────────────────────────────────── -->
-  <text x="460" y="82" text-anchor="middle" fill="#64748b" font-size="10" font-weight="600" letter-spacing="1.5">LYTX AI AGENTS</text>
+  <!-- ── Row 1: Lytx agents ── -->
+  <text x="360" y="68" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="bold">LYTX AI AGENTS</text>
 
-  <!-- Agent 1: Route Optimizer -->
-  <rect x="36" y="90" width="148" height="56" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-  <text x="110" y="113" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Route Optimizer</text>
-  <text x="110" y="131" text-anchor="middle" fill="#64748b" font-size="10">Fleet dispatch &amp; routing</text>
+  <rect x="10"  y="74" width="152" height="40" rx="6" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="86"  y="98" text-anchor="middle" fill="#1e293b" font-size="11" font-weight="bold">Route Optimizer</text>
 
-  <!-- Agent 2: Driver Coach -->
-  <rect x="202" y="90" width="148" height="56" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-  <text x="276" y="113" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Driver Coach</text>
-  <text x="276" y="131" text-anchor="middle" fill="#64748b" font-size="10">Behavior &amp; scoring AI</text>
+  <rect x="174" y="74" width="152" height="40" rx="6" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="250" y="98" text-anchor="middle" fill="#1e293b" font-size="11" font-weight="bold">Driver Coach</text>
 
-  <!-- Agent 3: Safety Monitor -->
-  <rect x="368" y="90" width="148" height="56" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-  <text x="442" y="113" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Safety Monitor</text>
-  <text x="442" y="131" text-anchor="middle" fill="#64748b" font-size="10">Event detection &amp; alerts</text>
+  <rect x="338" y="74" width="152" height="40" rx="6" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="414" y="98" text-anchor="middle" fill="#1e293b" font-size="11" font-weight="bold">Safety Monitor</text>
 
-  <!-- Agent 4: Fleet Analytics -->
-  <rect x="534" y="90" width="148" height="56" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-  <text x="608" y="113" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Fleet Analytics</text>
-  <text x="608" y="131" text-anchor="middle" fill="#64748b" font-size="10">Reports &amp; insights</text>
+  <rect x="502" y="74" width="208" height="40" rx="6" fill="#e2e8f0" stroke="#cbd5e1" stroke-width="1"/>
+  <text x="606" y="98" text-anchor="middle" fill="#1e293b" font-size="11" font-weight="bold">Fleet Analytics</text>
 
-  <!-- Agent 5: Dispatch Assistant -->
-  <rect x="700" y="90" width="184" height="56" rx="8" fill="#1e293b" stroke="#334155" stroke-width="1.5"/>
-  <text x="792" y="113" text-anchor="middle" fill="#e2e8f0" font-size="12" font-weight="600">Dispatch Assistant</text>
-  <text x="792" y="131" text-anchor="middle" fill="#64748b" font-size="10">Scheduling &amp; comms</text>
+  <!-- agents → gate (converging lines) -->
+  <line x1="86"  y1="114" x2="86"  y2="134" stroke="#64748b" stroke-width="1.2"/>
+  <line x1="250" y1="114" x2="250" y2="134" stroke="#64748b" stroke-width="1.2"/>
+  <line x1="414" y1="114" x2="414" y2="134" stroke="#64748b" stroke-width="1.2"/>
+  <line x1="606" y1="114" x2="606" y2="134" stroke="#64748b" stroke-width="1.2"/>
+  <line x1="86"  y1="134" x2="606" y2="134" stroke="#64748b" stroke-width="1.2"/>
+  <line x1="360" y1="134" x2="360" y2="152" stroke="#64748b" stroke-width="1.2" marker-end="url(#a)"/>
+  <text x="395" y="146" fill="#64748b" font-size="9">register agent</text>
 
-  <!-- Arrows from agents into Watchtower -->
-  <line x1="110" y1="146" x2="110" y2="172" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr-b)"/>
-  <line x1="276" y1="146" x2="276" y2="172" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr-b)"/>
-  <line x1="442" y1="146" x2="442" y2="172" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr-b)"/>
-  <line x1="608" y1="146" x2="608" y2="172" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr-b)"/>
-  <line x1="792" y1="146" x2="792" y2="172" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#arr-b)"/>
+  <!-- ── Pre-deployment gate ── -->
+  <rect x="140" y="152" width="440" height="64" rx="8" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="360" y="175" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Pre-Deployment Gate</text>
+  <text x="360" y="193" text-anchor="middle" fill="#93c5fd" font-size="10">46 adversarial probes · 9 OWASP LLM categories · weighted risk score</text>
+  <text x="360" y="208" text-anchor="middle" fill="#64748b" font-size="9">Injection · Jailbreak · PII · SysPrompt · Excessive Agency · MCP Poisoning · Output · Misinformation</text>
 
-  <!-- horizontal connector line -->
-  <line x1="110" y1="172" x2="792" y2="172" stroke="#3b82f6" stroke-width="1.5"/>
+  <!-- gate → pass -->
+  <line x1="220" y1="216" x2="160" y2="248" stroke="#16a34a" stroke-width="2" marker-end="url(#ag)"/>
+  <text x="162" y="238" fill="#16a34a" font-size="10" font-weight="bold">PASS</text>
 
-  <!-- Vertical drop to Watchtower -->
-  <line x1="460" y1="172" x2="460" y2="188" stroke="#3b82f6" stroke-width="2" marker-end="url(#arr-b)"/>
-  <text x="300" y="170" fill="#3b82f6" font-size="9" font-weight="600">register agent + endpoint URL</text>
+  <!-- gate → fail -->
+  <line x1="500" y1="216" x2="560" y2="248" stroke="#dc2626" stroke-width="2" marker-end="url(#ar)"/>
+  <text x="527" y="238" fill="#dc2626" font-size="10" font-weight="bold">FAIL</text>
 
-  <!-- ── WATCHTOWER CORE ──────────────────────────────────────────────── -->
-  <rect x="20" y="188" width="880" height="164" rx="10" fill="#111827" stroke="#1d4ed8" stroke-width="1.5"/>
-  <rect x="20" y="188" width="880" height="30" rx="10" fill="#1d4ed8"/>
-  <!-- fix bottom corners of header -->
-  <rect x="20" y="204" width="880" height="14" fill="#1d4ed8"/>
-  <text x="460" y="208" text-anchor="middle" fill="white" font-size="13" font-weight="700" letter-spacing="0.5">AI WATCHTOWER</text>
+  <!-- ── PASS branch ── -->
+  <rect x="10" y="248" width="290" height="52" rx="8" fill="#14532d" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="155" y="269" text-anchor="middle" fill="#4ade80" font-size="12" font-weight="bold">✓ Agent Approved</text>
+  <text x="155" y="287" text-anchor="middle" fill="#86efac" font-size="10">Goes to production · runtime monitoring active</text>
+  <text x="155" y="300" text-anchor="middle" fill="#86efac" font-size="9">Re-scanned automatically on every new version</text>
 
-  <!-- Left panel: Pre-deployment Gate -->
-  <rect x="32" y="228" width="390" height="112" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
-  <text x="52" y="248" fill="#93c5fd" font-size="10" font-weight="700" letter-spacing="1">PRE-DEPLOYMENT GATE</text>
+  <!-- approved → runtime -->
+  <line x1="155" y1="300" x2="155" y2="318" stroke="#22c55e" stroke-width="1.5" marker-end="url(#ag)"/>
 
-  <!-- Probe categories -->
-  <rect x="44" y="256" width="72" height="18" rx="4" fill="#dc2626"/>
-  <text x="80" y="269" text-anchor="middle" fill="white" font-size="9">Injection LLM01</text>
+  <rect x="10" y="318" width="290" height="52" rx="8" fill="#312e81" stroke="#7c3aed" stroke-width="1.5"/>
+  <text x="155" y="339" text-anchor="middle" fill="#c4b5fd" font-size="12" font-weight="bold">Runtime Monitoring</text>
+  <text x="155" y="357" text-anchor="middle" fill="#a78bfa" font-size="10">NeMo Guardrails · Bedrock Guardrails</text>
+  <text x="155" y="370" text-anchor="middle" fill="#a78bfa" font-size="9">LLM Guard · LlamaFirewall · any source</text>
 
-  <rect x="122" y="256" width="68" height="18" rx="4" fill="#ea580c"/>
-  <text x="156" y="269" text-anchor="middle" fill="white" font-size="9">Jailbreak LLM06</text>
+  <!-- runtime → dashboard -->
+  <line x1="155" y1="370" x2="155" y2="388" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a)"/>
 
-  <rect x="196" y="256" width="52" height="18" rx="4" fill="#ca8a04"/>
-  <text x="222" y="269" text-anchor="middle" fill="white" font-size="9">PII LLM02</text>
+  <!-- ── FAIL branch ── -->
+  <rect x="420" y="248" width="290" height="52" rx="8" fill="#450a0a" stroke="#ef4444" stroke-width="1.5"/>
+  <text x="565" y="269" text-anchor="middle" fill="#f87171" font-size="12" font-weight="bold">✗ Agent Blocked</text>
+  <text x="565" y="287" text-anchor="middle" fill="#fca5a5" font-size="10">Team alerted · per-probe evidence report</text>
+  <text x="565" y="300" text-anchor="middle" fill="#fca5a5" font-size="9">Suggested remediation code · fix and re-register</text>
 
-  <rect x="254" y="256" width="76" height="18" rx="4" fill="#15803d"/>
-  <text x="292" y="269" text-anchor="middle" fill="white" font-size="9">SysPrompt LLM07</text>
+  <!-- fail → fix loop -->
+  <line x1="565" y1="300" x2="565" y2="328" stroke="#ef4444" stroke-width="1.2"/>
+  <line x1="565" y1="328" x2="700" y2="328" stroke="#ef4444" stroke-width="1.2"/>
+  <line x1="700" y1="328" x2="700" y2="184" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="5,3"/>
+  <line x1="700" y1="184" x2="582" y2="184" stroke="#ef4444" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#ar)"/>
+  <text x="716" y="260" fill="#94a3b8" font-size="9" transform="rotate(90,716,260)">Fix &amp; re-register</text>
 
-  <rect x="336" y="256" width="60" height="18" rx="4" fill="#6d28d9"/>
-  <text x="366" y="269" text-anchor="middle" fill="white" font-size="9">Agency LLM08</text>
+  <!-- ── Bottom dashboard ── -->
+  <rect x="310" y="318" width="400" height="86" rx="8" fill="#1e293b" stroke="#475569" stroke-width="1.5"/>
+  <text x="510" y="340" text-anchor="middle" fill="white" font-size="12" font-weight="bold">Security Dashboard + Galactus AI</text>
 
-  <rect x="44" y="280" width="52" height="18" rx="4" fill="#0e7490"/>
-  <text x="70" y="293" text-anchor="middle" fill="white" font-size="9">MCP LLM03</text>
+  <rect x="320" y="350" width="115" height="44" rx="5" fill="#0f172a"/>
+  <text x="378" y="368" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="bold">Fleet Risk Score</text>
+  <text x="378" y="382" text-anchor="middle" fill="#64748b" font-size="8">all teams · trends</text>
+  <text x="378" y="393" text-anchor="middle" fill="#64748b" font-size="8">OWASP heatmap</text>
 
-  <rect x="102" y="280" width="60" height="18" rx="4" fill="#0369a1"/>
-  <text x="132" y="293" text-anchor="middle" fill="white" font-size="9">Output LLM05</text>
+  <rect x="445" y="350" width="115" height="44" rx="5" fill="#0f172a"/>
+  <text x="503" y="368" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="bold">Live Event Feed</text>
+  <text x="503" y="382" text-anchor="middle" fill="#64748b" font-size="8">injection attempts</text>
+  <text x="503" y="393" text-anchor="middle" fill="#64748b" font-size="8">blocked in real time</text>
 
-  <rect x="168" y="280" width="240" height="18" rx="4" fill="#1e293b"/>
-  <text x="288" y="293" text-anchor="middle" fill="#94a3b8" font-size="9">46 probes · weighted risk score · ~15 sec</text>
+  <rect x="570" y="350" width="130" height="44" rx="5" fill="#0f172a"/>
+  <text x="635" y="368" text-anchor="middle" fill="#94a3b8" font-size="9" font-weight="bold">Galactus AI Analyst</text>
+  <text x="635" y="382" text-anchor="middle" fill="#64748b" font-size="8">Claude via Bedrock</text>
+  <text x="635" y="393" text-anchor="middle" fill="#64748b" font-size="8">plain-English briefings</text>
 
-  <!-- Gate result labels -->
-  <rect x="44" y="308" width="88" height="22" rx="5" fill="#15803d"/>
-  <text x="88" y="323" text-anchor="middle" fill="white" font-size="10" font-weight="700">✓ APPROVED</text>
-
-  <rect x="142" y="308" width="82" height="22" rx="5" fill="#dc2626"/>
-  <text x="183" y="323" text-anchor="middle" fill="white" font-size="10" font-weight="700">✗ BLOCKED</text>
-
-  <text x="238" y="322" fill="#64748b" font-size="9">→ alert + per-probe evidence + fix hints</text>
-
-  <!-- Divider -->
-  <line x1="432" y1="230" x2="432" y2="338" stroke="#1e293b" stroke-width="2"/>
-
-  <!-- Right panel: Runtime Monitoring + Galactus -->
-  <rect x="442" y="228" width="448" height="112" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
-  <text x="462" y="248" fill="#a78bfa" font-size="10" font-weight="700" letter-spacing="1">RUNTIME MONITORING + GALACTUS</text>
-
-  <!-- Guardrail sources -->
-  <rect x="454" y="256" width="130" height="18" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-  <text x="519" y="269" text-anchor="middle" fill="#e2e8f0" font-size="9">Bedrock Guardrails</text>
-
-  <rect x="594" y="256" width="110" height="18" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-  <text x="649" y="269" text-anchor="middle" fill="#e2e8f0" font-size="9">NeMo Guardrails</text>
-
-  <rect x="714" y="256" width="80" height="18" rx="4" fill="#1e293b" stroke="#334155" stroke-width="1"/>
-  <text x="754" y="269" text-anchor="middle" fill="#e2e8f0" font-size="9">LLM Guard</text>
-
-  <text x="462" y="296" fill="#64748b" font-size="9">Every blocked event forwarded in real time → unified dashboard</text>
-  <text x="462" y="311" fill="#64748b" font-size="9">No agent code changes needed · any guardrail · any language</text>
-
-  <!-- Galactus -->
-  <rect x="454" y="308" width="424" height="22" rx="5" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
-  <text x="480" y="323" fill="#93c5fd" font-size="9" font-weight="700">GALACTUS</text>
-  <text x="540" y="323" fill="#64748b" font-size="9">— Claude-powered analyst: "Which agent is highest risk right now?"</text>
-
-  <!-- ── OUTPUTS (bottom row) ──────────────────────────────────────────── -->
-
-  <!-- Arrow from gate to approved -->
-  <line x1="186" y1="352" x2="140" y2="378" stroke="#22c55e" stroke-width="1.5" marker-end="url(#arr-g)"/>
-
-  <!-- Arrow from gate to blocked -->
-  <line x1="270" y1="352" x2="320" y2="378" stroke="#ef4444" stroke-width="1.5" marker-end="url(#arr-r)"/>
-
-  <!-- Arrow from runtime to dashboard -->
-  <line x1="666" y1="352" x2="666" y2="378" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
-
-  <!-- Approved box -->
-  <rect x="20" y="378" width="220" height="102" rx="8" fill="#14532d" stroke="#22c55e" stroke-width="1.5"/>
-  <text x="130" y="400" text-anchor="middle" fill="#4ade80" font-size="12" font-weight="700">Agent Approved</text>
-  <text x="130" y="418" text-anchor="middle" fill="#86efac" font-size="10">Goes to production</text>
-  <text x="130" y="436" text-anchor="middle" fill="#86efac" font-size="10">Runtime monitoring active</text>
-  <text x="130" y="454" text-anchor="middle" fill="#86efac" font-size="10">Events flow to dashboard</text>
-  <text x="130" y="468" text-anchor="middle" fill="#4ade80" font-size="9" font-weight="600">Scan runs on every new version</text>
-
-  <!-- Blocked box -->
-  <rect x="254" y="378" width="228" height="102" rx="8" fill="#450a0a" stroke="#ef4444" stroke-width="1.5"/>
-  <text x="368" y="400" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">Agent Blocked</text>
-  <text x="368" y="418" text-anchor="middle" fill="#fca5a5" font-size="10">Team alerted immediately</text>
-  <text x="368" y="436" text-anchor="middle" fill="#fca5a5" font-size="10">Per-probe failure evidence</text>
-  <text x="368" y="454" text-anchor="middle" fill="#fca5a5" font-size="10">Suggested remediation code</text>
-  <text x="368" y="468" text-anchor="middle" fill="#f87171" font-size="9" font-weight="600">Fix → re-register → re-scan</text>
-
-  <!-- Dashboard box -->
-  <rect x="496" y="378" width="404" height="102" rx="8" fill="#1e1b4b" stroke="#7c3aed" stroke-width="1.5"/>
-  <text x="698" y="400" text-anchor="middle" fill="#c4b5fd" font-size="12" font-weight="700">Cross-Team Security Dashboard</text>
-
-  <!-- Dashboard columns -->
-  <text x="556" y="424" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="600">Fleet Risk Score</text>
-  <text x="556" y="440" text-anchor="middle" fill="#7c6fbc" font-size="9">All teams · all agents</text>
-  <text x="556" y="454" text-anchor="middle" fill="#7c6fbc" font-size="9">Trend over time</text>
-
-  <line x1="620" y1="415" x2="620" y2="475" stroke="#312e81" stroke-width="1"/>
-
-  <text x="665" y="424" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="600">Live Event Feed</text>
-  <text x="665" y="440" text-anchor="middle" fill="#7c6fbc" font-size="9">Injection attempts</text>
-  <text x="665" y="454" text-anchor="middle" fill="#7c6fbc" font-size="9">Blocked at runtime</text>
-
-  <line x1="710" y1="415" x2="710" y2="475" stroke="#312e81" stroke-width="1"/>
-
-  <text x="779" y="424" text-anchor="middle" fill="#a78bfa" font-size="10" font-weight="600">Galactus AI Briefings</text>
-  <text x="779" y="440" text-anchor="middle" fill="#7c6fbc" font-size="9">Plain-English summaries</text>
-  <text x="779" y="454" text-anchor="middle" fill="#7c6fbc" font-size="9">Q&amp;A across fleet</text>
-
-  <text x="698" y="472" text-anchor="middle" fill="#4c1d95" font-size="9">Grafana fleet view · Slack alerts · OWASP heatmap</text>
+  <!-- runtime events line to dashboard -->
+  <line x1="310" y1="360" x2="300" y2="360" stroke="#7c3aed" stroke-width="1.2"/>
+  <line x1="300" y1="344" x2="300" y2="375" stroke="#7c3aed" stroke-width="1.2"/>
 
 </svg>

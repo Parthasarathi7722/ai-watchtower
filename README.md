@@ -21,6 +21,37 @@ Every AI agent Lytx ships is an attack surface. A route optimizer that follows i
 
 ---
 
+## How it works
+
+```mermaid
+flowchart TD
+    subgraph Fleet["Lytx AI Agent Fleet"]
+        direction LR
+        RO["Route Optimizer"]
+        DC["Driver Coach"]
+        SM["Safety Monitor"]
+        FA["Fleet Analytics"]
+    end
+
+    Fleet -->|"register agent + endpoint URL"| Gate
+
+    subgraph WT["AI Watchtower"]
+        direction TB
+        Gate{"Pre-Deployment Gate\n46 adversarial probes · 9 OWASP categories\nweighted risk score in ~15 sec"}
+        Runtime["Runtime Monitoring\nNeMo Guardrails · Bedrock Guardrails · LLM Guard"]
+        Galactus["Galactus AI Analyst\nClaude via AWS Bedrock"]
+    end
+
+    Gate -->|"✅ APPROVED — goes to production"| Runtime
+    Gate -->|"❌ BLOCKED — alert + per-probe evidence"| Fix["Fix & re-register"]
+    Fix -->|"re-scan on every new version"| Gate
+
+    Runtime -->|"blocked events forwarded in real time"| Galactus
+    Galactus --> DB["Security Dashboard\nFleet risk score · Live event feed · OWASP heatmap · Slack alerts"]
+```
+
+---
+
 ## What Watchtower does
 
 ### Pre-deployment gate
