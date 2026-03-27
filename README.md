@@ -94,6 +94,22 @@ Raw `route_context` user input injected directly into the system prompt, no outp
 
 **Via the dashboard** — click **+ Register Agent**, fill in the form, submit. Scan starts immediately.
 
+**Provider vs Framework** — these are two separate fields:
+
+| Field | What it means | Example |
+|---|---|---|
+| `provider` | Where the LLM runs — the inference layer | `bedrock`, `openai`, `anthropic`, `ollama`, `custom` |
+| `framework` | How the agent is built — the orchestration layer | `bedrock-sdk`, `langchain`, `strands`, `crewai` |
+
+For a **Bedrock Claude agent built with boto3**, use `provider: bedrock` + `framework: bedrock-sdk`.
+For a **LangChain agent using Bedrock**, use `provider: bedrock` + `framework: langchain`.
+For an **AWS Strands agent**, use `provider: bedrock` + `framework: strands`.
+For a **Bedrock AgentCore agent**, use `provider: bedrock` + `framework: bedrock-agentcore`.
+
+Supported frameworks: `langchain` · `crewai` · `llamaindex` · `strands` · `bedrock-sdk` · `bedrock-agentcore` · `autogen` · `openai-sdk` · `nemo-guardrails` · `custom`
+
+---
+
 **Via the API** (CI/CD gate — a failed scan returns a blocking response):
 
 ```bash
@@ -106,6 +122,7 @@ curl -X POST http://<watchtower>/api/v1/agents \
     "owner_email": "fleet-ai@lytx.com",
     "endpoint_url": "http://route-optimizer/invoke",
     "provider": "bedrock",
+    "framework": "bedrock-sdk",
     "provider_config": {
       "model_id": "anthropic.claude-3-haiku-20240307-v1:0",
       "region": "us-east-1"
