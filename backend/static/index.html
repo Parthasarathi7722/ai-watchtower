@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI Watchtower</title>
+<style>
+  :root{
+    --bg:#0f1117;--surface:#1a1f2e;--surface2:#1e293b;
+    --border:#2d3748;--text:#e2e8f0;--muted:#94a3b8;--subtle:#475569;
+    --blue:#3b82f6;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;
+    --purple:#8b5cf6;--pink:#ec4899;--cyan:#06b6d4;--orange:#f97316;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh}
+
+  /* Header */
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+  .logo{font-size:18px;font-weight:700;letter-spacing:.5px}
+  .logo span{color:var(--red)}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .header-meta{margin-left:auto;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:16px}
+  .badge-mock{background:#78350f;color:#fde68a;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+
+  /* Layout */
+  main{max-width:1400px;margin:0 auto;padding:24px 28px}
+
+  /* Stats */
+  .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:24px}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;transition:border-color .2s}
+  .stat:hover{border-color:var(--blue)}
+  .stat-value{font-size:28px;font-weight:700;margin-bottom:4px}
+  .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+  /* Grid */
+  .grid2{display:grid;grid-template-columns:1fr 380px;gap:16px;margin-bottom:16px}
+
+  /* Cards */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .card-title{font-weight:600;font-size:13px;white-space:nowrap}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse}
+  th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);border-bottom:1px solid var(--border)}
+  td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr.agent-row{cursor:pointer}
+  tr.agent-row:hover td{background:rgba(255,255,255,.025)}
+  tr.agent-row.active td{background:rgba(59,130,246,.06);border-left:2px solid var(--blue)}
+
+  /* Badges */
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+  .badge-green{background:rgba(16,185,129,.15);color:#34d399}
+  .badge-red{background:rgba(239,68,68,.15);color:#f87171}
+  .badge-yellow{background:rgba(245,158,11,.15);color:#fbbf24}
+  .badge-blue{background:rgba(59,130,246,.15);color:#60a5fa}
+  .badge-purple{background:rgba(139,92,246,.15);color:#a78bfa}
+  .badge-gray{background:rgba(100,116,139,.2);color:var(--muted)}
+  .badge-orange{background:rgba(249,115,22,.15);color:#fb923c}
+
+  /* Risk bar */
+  .risk-wrap{display:flex;align-items:center;gap:6px}
+  .risk-bar{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;max-width:64px}
+  .risk-fill{height:100%;border-radius:3px;transition:width .5s}
+  .risk-val{font-size:11px;font-weight:600;min-width:34px}
+
+  /* Buttons */
+  button{cursor:pointer;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;transition:opacity .15s}
+  button:hover{opacity:.8}
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-ghost{background:var(--surface2);color:var(--muted)}
+  .btn-sm{padding:4px 10px;font-size:11px}
+  .btn-icon{padding:3px 8px;font-size:13px;background:rgba(239,68,68,.1);color:#f87171;border:1px solid rgba(239,68,68,.2);border-radius:5px}
+  .btn-add{background:rgba(59,130,246,.1);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+
+  /* Events feed */
+  .feed-filters{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--border)}
+  .feed-filters select{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:4px 8px;color:var(--text);font-size:11px;flex:1}
+  .events-feed{max-height:430px;overflow-y:auto;padding:6px}
+  .event-item{display:flex;gap:10px;padding:8px;border-radius:7px;margin-bottom:3px;align-items:flex-start}
+  .event-item:hover{background:var(--surface2)}
+  .event-dot{width:7px;height:7px;border-radius:50%;margin-top:5px;flex-shrink:0}
+  .event-body{flex:1;min-width:0}
+  .event-title{font-size:12px;font-weight:600;margin-bottom:2px}
+  .event-meta{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* Modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;width:620px;max-width:100%;margin-bottom:40px}
+  .modal h2{font-size:16px;font-weight:700;margin-bottom:4px}
+  .modal-subtitle{font-size:12px;color:var(--muted);margin-bottom:20px}
+
+  /* Form */
+  .form-section{margin-bottom:20px}
+  .form-section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .form-group{display:flex;flex-direction:column;gap:5px}
+  .form-group.full{grid-column:1/-1}
+  label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;width:100%}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+  input::placeholder{color:var(--subtle)}
+  .form-hint{font-size:11px;color:var(--subtle);margin-top:3px}
+  .form-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:4px}
+
+  /* MCP rows */
+  .mcp-list{display:flex;flex-direction:column;gap:8px}
+  .mcp-entry{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px}
+  .mcp-entry-header{display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:center;margin-bottom:6px}
+  .mcp-entry-header input{font-size:12px;padding:5px 8px}
+
+  /* Scan progress */
+  .scan-progress{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.25);border-radius:8px;padding:14px 16px;margin-bottom:16px;display:none}
+  .scan-progress.active{display:block}
+  .scan-progress-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:10px}
+  .scan-progress-fill{height:100%;background:var(--blue);border-radius:2px;animation:scanPulse 1.8s ease-in-out infinite}
+  @keyframes scanPulse{0%{width:4%;opacity:.5}50%{width:75%;opacity:1}100%{width:96%;opacity:.5}}
+
+  /* Toast */
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:400;animation:slideUp .3s ease;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+  @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .toast-success{border-left:3px solid var(--green)}
+  .toast-error{border-left:3px solid var(--red)}
+  .toast-info{border-left:3px solid var(--blue)}
+
+  /* Detail panel */
+  .detail-panel{position:fixed;top:0;right:-500px;width:480px;height:100vh;background:var(--surface);border-left:1px solid var(--border);z-index:150;display:flex;flex-direction:column;transition:right .3s cubic-bezier(.4,0,.2,1)}
+  .detail-panel.open{right:0}
+  .detail-panel-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .detail-panel-body{flex:1;overflow-y:auto;padding:18px 22px}
+  .panel-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:140}
+  .panel-backdrop.open{display:block}
+
+  /* Tabs */
+  .tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px}
+  .tab{padding:8px 14px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;user-select:none}
+  .tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+  .tab-content{display:none}
+  .tab-content.active{display:block}
+
+  /* Scan cards */
+  .scan-card{border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden}
+  .scan-card-header{padding:10px 14px;background:var(--surface2);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .scan-scores-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px}
+  .score-item{background:var(--surface2);border-radius:7px;padding:10px;text-align:center}
+  .score-val{font-size:20px;font-weight:700;margin-bottom:2px}
+  .score-label{font-size:10px;color:var(--muted);text-transform:uppercase}
+
+  /* Probe evidence */
+  .probe-toggle{padding:8px 12px;background:rgba(0,0,0,.12);cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);user-select:none}
+  .probe-toggle:hover{background:rgba(255,255,255,.03)}
+  .probe-list{padding:8px 12px 12px;border-top:1px solid var(--border)}
+  .probe-list.hidden{display:none}
+  .probe-card{margin-top:8px;border-radius:6px;overflow:hidden;border:1px solid rgba(239,68,68,.2)}
+  .probe-mono{font-family:'Courier New',monospace;font-size:11px;word-break:break-all;line-height:1.5;white-space:pre-wrap}
+
+  /* Provider config panels */
+  .provider-panel{background:rgba(59,130,246,.04);border:1px solid rgba(59,130,246,.12);border-radius:6px;padding:10px;margin-top:10px}
+  .provider-panel.hidden{display:none}
+
+  /* Rich probe findings */
+  .probe-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--subtle);margin-bottom:3px}
+  .probe-risk-text{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px;padding:5px 8px;background:rgba(239,68,68,.05);border-radius:4px;border-left:2px solid rgba(239,68,68,.4)}
+  .probe-code-example{font-family:'Courier New',monospace;font-size:10px;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:4px;padding:6px 8px;overflow-x:auto;white-space:pre;color:#93c5fd;margin-top:4px;line-height:1.5;max-height:160px;overflow-y:auto}
+  .sev-critical{background:rgba(236,72,153,.15);color:#f472b6}
+  .sev-high{background:rgba(239,68,68,.15);color:#f87171}
+  .sev-medium{background:rgba(245,158,11,.15);color:#fbbf24}
+  .sev-low{background:rgba(59,130,246,.15);color:#60a5fa}
+
+  /* Info rows */
+  .info-row{display:flex;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);gap:12px}
+  .info-row:last-child{border-bottom:none}
+  .info-key{font-size:11px;color:var(--muted);width:130px;flex-shrink:0;padding-top:1px;font-weight:600}
+  .info-val{font-size:12px;word-break:break-all;line-height:1.5}
+
+  /* Spinner */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:4px;height:4px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+  .refresh-time{font-size:11px;color:var(--subtle)}
+  .empty{padding:36px;text-align:center;color:var(--subtle);font-size:13px}
+
+  /* ── Galactus AI Analytics Widget ───────────────────────────────────────── */
+  .galactus-insight-card{border-color:rgba(139,92,246,.25);background:linear-gradient(135deg,var(--surface) 0%,rgba(139,92,246,.03) 100%)}
+  .galactus-insight-card .card-header{border-bottom-color:rgba(139,92,246,.15)}
+  .insight-summary-line{font-size:12px;line-height:1.7;color:var(--text);margin-bottom:5px;display:flex;gap:8px}
+  .insight-summary-line .bullet{color:var(--purple);flex-shrink:0;font-weight:700}
+  .insight-heading{font-size:12px;font-weight:700;color:var(--purple);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.4px}
+  .insight-skeleton{height:14px;background:linear-gradient(90deg,rgba(139,92,246,.08) 25%,rgba(139,92,246,.18) 50%,rgba(139,92,246,.08) 75%);background-size:200% 100%;animation:shimmer 1.6s infinite;border-radius:4px;margin-bottom:8px}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+  /* ── Galactus AI Security Panel ──────────────────────────────────────────── */
+  .galactus-chat{display:flex;flex-direction:column;gap:0}
+  .galactus-messages{overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:8px 2px;flex:1;min-height:0}
+  .galactus-msg{border-radius:8px;padding:9px 12px;font-size:12px;line-height:1.65;word-break:break-word;white-space:pre-wrap}
+  .galactus-msg.user{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);align-self:flex-end;max-width:92%;white-space:normal}
+  .galactus-msg.ai{background:var(--surface2);border:1px solid var(--border);align-self:flex-start;max-width:100%}
+  .galactus-msg.loading{color:var(--subtle);font-style:italic;border:1px dashed var(--border);background:transparent}
+  .galactus-input-row{display:flex;gap:6px;padding-top:8px;border-top:1px solid var(--border);align-items:flex-end}
+  .galactus-input-row textarea{flex:1;resize:none;height:60px;font-size:12px;font-family:inherit}
+  .galactus-input-row .galactus-send{white-space:nowrap;align-self:flex-end}
+  .galactus-controls{display:flex;align-items:center;gap:8px;padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:4px}
+  .galactus-controls select{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 7px;color:var(--text);font-size:11px;width:auto}
+  .galactus-suggestions{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+  .suggestion-chip{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);color:var(--purple);padding:3px 10px;border-radius:99px;font-size:11px;cursor:pointer;transition:background .15s;user-select:none}
+  .suggestion-chip:hover{background:rgba(139,92,246,.2)}
+  .btn-galactus{background:rgba(139,92,246,.15);color:var(--purple);border:1px solid rgba(139,92,246,.3)}
+  .btn-galactus:hover{background:rgba(139,92,246,.25)}
+  /* Galactus global modal */
+  .galactus-modal-inner{width:720px;max-width:100%}
+  .galactus-modal-chat{height:420px;display:flex;flex-direction:column}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="dot"></div>
+  <div class="logo">AI <span>Watchtower</span></div>
+  <span id="mock-badge"></span>
+  <div class="header-meta">
+    <span class="refresh-time" id="refresh-time">Refreshing...</span>
+    <button class="btn-galactus" onclick="openGalactusModal(null)" title="Ask Galactus AI security questions about your fleet" style="display:flex;align-items:center;gap:5px;font-size:12px;padding:6px 12px">
+      <span style="font-size:14px">⬡</span> Ask Galactus
+    </button>
+    <button class="btn-primary" onclick="openRegModal()">+ Register Agent</button>
+    <a href="/settings" style="text-decoration:none"><button class="btn-ghost" title="Platform settings" style="padding:6px 10px;font-size:13px;color:var(--subtle)">⚙</button></a>
+    <button class="btn-ghost" onclick="doLogout()" title="Sign out" style="padding:6px 10px;font-size:12px;color:var(--subtle)">⎋ Sign out</button>
+  </div>
+</header>
+
+<main>
+  <div class="stats">
+    <div class="stat"><div class="stat-value" id="s-total">—</div><div class="stat-label">Agents</div></div>
+    <div class="stat"><div class="stat-value" style="color:var(--green)" id="s-approved">—</div><div class="stat-label">Approved</div></div>
+    <div class="stat"><div class="stat-value" style="color:var(--red)" id="s-blocked">—</div><div class="stat-label">Blocked</div></div>
+    <div class="stat"><div class="stat-value" id="s-scans">—</div><div class="stat-label">Total Scans</div></div>
+    <div class="stat"><div class="stat-value" style="color:var(--yellow)" id="s-events">—</div><div class="stat-label">Events 24h</div></div>
+    <div class="stat"><div class="stat-value" style="color:var(--red)" id="s-critical">—</div><div class="stat-label">Critical 24h</div></div>
+  </div>
+
+  <!-- ── Galactus AI Analytics Widget ─────────────────────────────────────── -->
+  <div class="card galactus-insight-card" id="galactus-insight-card" style="margin-bottom:16px">
+    <div class="card-header">
+      <span class="card-title" style="display:flex;align-items:center;gap:7px">
+        <span style="color:var(--purple);font-size:16px;line-height:1">⬡</span>
+        <span>Galactus AI Security Overview</span>
+        <span class="badge badge-purple" style="font-size:10px;padding:1px 6px">AI</span>
+      </span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="insight-model-badge" style="font-size:10px;color:var(--subtle)"></span>
+        <span id="insight-timestamp" style="font-size:11px;color:var(--subtle)"></span>
+        <button class="btn-sm btn-galactus" id="insight-refresh-btn" onclick="loadGalactusInsight()">↻ Analyze</button>
+        <button class="btn-sm btn-ghost" onclick="openGalactusModal(null)" style="font-size:11px">Chat ›</button>
+      </div>
+    </div>
+    <div id="galactus-insight-body" style="padding:14px 18px;min-height:72px;display:flex;align-items:center">
+      <div style="color:var(--subtle);font-size:12px">
+        Click <strong style="color:var(--purple)">↻ Analyze</strong> to generate an AI-powered security overview of your agent fleet (requires AWS Bedrock credentials).
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Agent Fleet</span>
+        <button class="btn-ghost btn-sm" onclick="refresh()">↻ Refresh</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Agent</th>
+            <th>Team</th>
+            <th>Framework</th>
+            <th>Gate</th>
+            <th>Risk Score</th>
+            <th>Events 24h</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="agents-tbody">
+          <tr><td colspan="7" class="empty">Loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Live Security Events</span>
+        <span class="badge badge-red" id="event-count-badge">0</span>
+      </div>
+      <div class="feed-filters">
+        <select id="filter-severity" onchange="applyFilters()">
+          <option value="">All severities</option>
+          <option value="critical">Critical</option>
+          <option value="high">High</option>
+          <option value="medium">Medium</option>
+          <option value="low">Low</option>
+        </select>
+        <select id="filter-type" onchange="applyFilters()">
+          <option value="">All types</option>
+          <option value="prompt_injection">Prompt Injection</option>
+          <option value="pii">PII</option>
+          <option value="jailbreak">Jailbreak</option>
+          <option value="tool_poisoning">Tool Poisoning</option>
+          <option value="content_violation">Content Violation</option>
+        </select>
+      </div>
+      <div class="events-feed" id="events-feed">
+        <div class="empty">No events yet</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-header"><span class="card-title">Event Breakdown (24h)</span></div>
+    <div id="breakdown" style="display:flex;gap:12px;padding:16px;flex-wrap:wrap">
+      <span class="empty" style="padding:8px">No events in last 24h</span>
+    </div>
+  </div>
+</main>
+
+<!-- Detail Panel Backdrop -->
+<div class="panel-backdrop" id="panel-backdrop" onclick="closeDetailPanel()"></div>
+
+<!-- Agent Detail Panel -->
+<div class="detail-panel" id="detail-panel">
+  <div class="detail-panel-header">
+    <div>
+      <div style="font-weight:700;font-size:15px" id="dp-name">Agent Detail</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:2px" id="dp-sub"></div>
+    </div>
+    <button class="btn-ghost btn-sm" onclick="closeDetailPanel()">✕</button>
+  </div>
+  <div class="detail-panel-body">
+    <div class="tabs">
+      <div class="tab active" data-tab="overview" onclick="switchTab('overview')">Overview</div>
+      <div class="tab" data-tab="scans" onclick="switchTab('scans')">Scan History</div>
+      <div class="tab" data-tab="guardrails" onclick="switchTab('guardrails')">Guardrails</div>
+      <div class="tab" data-tab="events" onclick="switchTab('events')">Events</div>
+      <div class="tab" data-tab="galactus" onclick="switchTab('galactus')" style="color:var(--purple)">⬡ Galactus</div>
+    </div>
+    <div class="tab-content active" id="tab-overview"></div>
+    <div class="tab-content" id="tab-scans"></div>
+    <div class="tab-content" id="tab-guardrails"></div>
+    <div class="tab-content" id="tab-events"></div>
+    <div class="tab-content" id="tab-galactus"></div>
+  </div>
+</div>
+
+<!-- Register Agent Modal -->
+<div class="modal-overlay" id="reg-modal">
+  <div class="modal">
+    <h2>Register Agent</h2>
+    <p class="modal-subtitle">Register your AI agent for pre-deployment red-team scanning. A security scan triggers automatically after registration.</p>
+
+    <div class="scan-progress" id="scan-progress">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="spinner" style="width:14px;height:14px"></div>
+        <span style="font-size:13px;font-weight:600" id="scan-progress-msg">Scanning agent...</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Red-team scan in progress. You can close this dialog — results will appear in the fleet table.</div>
+      <div class="scan-progress-bar"><div class="scan-progress-fill"></div></div>
+    </div>
+
+    <form id="register-form" onsubmit="submitAgent(event)">
+      <div class="form-section">
+        <div class="form-section-title">Basic Info</div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Agent Name *</label>
+            <input name="name" required placeholder="Customer Support Bot"/>
+          </div>
+          <div class="form-group">
+            <label>Team Name *</label>
+            <input name="team_name" required placeholder="Team Alpha"/>
+          </div>
+          <div class="form-group">
+            <label>Owner Email *</label>
+            <input name="owner_email" type="email" required placeholder="you@company.com"/>
+          </div>
+          <div class="form-group">
+            <label>Slack Channel</label>
+            <input name="slack_channel" placeholder="#team-alpha-alerts"/>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Endpoint &amp; Provider</div>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Agent Endpoint URL *</label>
+            <input name="endpoint_url" required placeholder="http://mock-agent:4000/invoke"/>
+            <div class="form-hint">Full URL the scanner will POST test prompts to (include path, e.g. /invoke)</div>
+          </div>
+          <div class="form-group">
+            <label>Provider</label>
+            <select name="provider" id="provider-sel" onchange="onProviderChange(this.value)">
+              <option value="">Select provider...</option>
+              <option value="openai">OpenAI</option>
+              <option value="anthropic">Anthropic</option>
+              <option value="ollama">Ollama (local)</option>
+              <option value="openai_compatible">OpenAI-compatible (vLLM / LM Studio)</option>
+              <option value="bedrock">AWS Bedrock</option>
+              <option value="custom">Custom / HTTP</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Framework</label>
+            <select name="framework">
+              <option value="">Select...</option>
+              <option>langchain</option>
+              <option>crewai</option>
+              <option>llamaindex</option>
+              <option>openai-sdk</option>
+              <option>custom</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- OpenAI / Anthropic -->
+        <div id="prov-openai" class="provider-panel hidden">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Model</label>
+              <input name="pc_model" placeholder="gpt-4o  /  claude-3-5-sonnet-20241022"/>
+            </div>
+            <div class="form-group">
+              <label>API Key Env Var</label>
+              <input name="pc_api_key_env" placeholder="OPENAI_API_KEY"/>
+              <div class="form-hint">Env var name — never stored in DB, resolved at scan time</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ollama (local LLM) -->
+        <div id="prov-ollama" class="provider-panel hidden">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Model</label>
+              <input name="pc_ollama_model" placeholder="llama3:70b"/>
+            </div>
+            <div class="form-group">
+              <label>Ollama Base URL</label>
+              <input name="pc_base_url" placeholder="http://localhost:11434"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- OpenAI-compatible (vLLM / LM Studio) -->
+        <div id="prov-openai_compatible" class="provider-panel hidden">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Model</label>
+              <input name="pc_compat_model" placeholder="mistral-7b-instruct"/>
+            </div>
+            <div class="form-group">
+              <label>Base URL</label>
+              <input name="pc_compat_base_url" placeholder="http://localhost:8000/v1"/>
+            </div>
+            <div class="form-group full">
+              <label>API Key Env Var (optional)</label>
+              <input name="pc_compat_api_key_env" placeholder="VLLM_API_KEY — leave blank if not required"/>
+            </div>
+          </div>
+        </div>
+
+        <!-- AWS Bedrock -->
+        <div id="prov-bedrock" class="provider-panel hidden">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Model ID</label>
+              <input name="pc_bedrock_model_id" placeholder="anthropic.claude-3-5-sonnet-20241022-v2:0"/>
+            </div>
+            <div class="form-group">
+              <label>AWS Region</label>
+              <input name="pc_region" placeholder="us-east-1"/>
+            </div>
+            <div class="form-group">
+              <label>Guardrail ID (optional)</label>
+              <input name="pc_guardrail_id" placeholder="abc123def456"/>
+            </div>
+            <div class="form-group">
+              <label>Guardrail Version (optional)</label>
+              <input name="pc_guardrail_version" placeholder="DRAFT or 1"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">MCP Servers <span style="font-weight:400;text-transform:none">(optional)</span></div>
+        <div class="mcp-list" id="mcp-list">
+          <div style="font-size:12px;color:var(--subtle)">No MCP servers added</div>
+        </div>
+        <button type="button" class="btn-ghost btn-add btn-sm" onclick="addMcpRow()" style="margin-top:8px">+ Add MCP Server</button>
+        <div class="form-hint" style="margin-top:6px">Tool descriptions are scanned for prompt injection patterns (OWASP LLM03)</div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Allowed Tools <span style="font-weight:400;text-transform:none">(optional)</span></div>
+        <div class="form-group">
+          <label>Tool names (comma-separated)</label>
+          <input name="allowed_tools_raw" placeholder="web_search, file_read, send_email"/>
+          <div class="form-hint">Declares which tools this agent is permitted to invoke</div>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span>NeMo Guardrails <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional runtime protection)</span></span>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;color:var(--muted)">
+            <input type="checkbox" id="nemo-toggle" onchange="toggleNemoPanel(this.checked)" style="width:auto;accent-color:var(--blue)"/>
+            Enable
+          </label>
+        </div>
+        <div style="font-size:11px;color:var(--subtle);margin-top:4px;margin-bottom:2px">
+          Wraps your agent with runtime input/output/execution rails — forwards blocked-event data to Watchtower automatically.
+        </div>
+        <div id="nemo-panel" class="provider-panel hidden" style="margin-top:10px;border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.03)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <span class="badge badge-green" style="font-size:10px">● NeMo Guardrails</span>
+            <span style="font-size:11px;color:var(--muted)">Provider-agnostic — works with OpenAI, Anthropic, Ollama, Bedrock</span>
+          </div>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>NeMo Server URL</label>
+              <input name="nemo_server_url" placeholder="http://nemo-guardrails:8000"/>
+              <div class="form-hint">REST server URL — Watchtower posts validation calls here during scan to verify rails are active</div>
+            </div>
+            <div class="form-group">
+              <label>Config Path (optional)</label>
+              <input name="nemo_config_path" placeholder="/app/guardrails/my-agent/"/>
+              <div class="form-hint">File-based config dir on the server (config.yml + rails.co)</div>
+            </div>
+            <div class="form-group">
+              <label>Active Rails</label>
+              <input name="nemo_rails" placeholder="input, output, execution, retrieval"/>
+              <div class="form-hint">Comma-separated — visible in agent overview after registration</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;padding:8px 10px;background:rgba(59,130,246,.05);border-radius:5px;border:1px solid rgba(59,130,246,.12)">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Setup (copy &amp; run in your agent project)</div>
+            <code style="font-size:10px;color:#93c5fd;line-height:1.8;display:block">pip install nemoguardrails httpx<br/>cp -r guardrails/example/ ./guardrails/my-agent/<br/>export WATCHTOWER_AGENT_ID=&lt;id-after-registration&gt;<br/>export WATCHTOWER_URL=http://localhost:8000</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-ghost" onclick="closeRegModal()">Cancel</button>
+        <button type="submit" class="btn-primary" id="submit-btn">Register &amp; Scan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Galactus AI Security Modal ──────────────────────────────────────────── -->
+<div class="modal-overlay" id="galactus-modal">
+  <div class="modal galactus-modal-inner">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <span style="font-size:20px;color:var(--purple)">⬡</span>
+      <h2 style="margin:0">Galactus</h2>
+      <span class="badge badge-purple" style="font-size:10px">AI Security Intel</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <label style="font-size:11px;color:var(--muted);white-space:nowrap">Mode:</label>
+        <select id="galactus-modal-mode" style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;color:var(--text);font-size:11px;width:auto"
+                onchange="onGalactusModeChange('modal',this.value)">
+          <option value="bedrock">Bedrock (Direct Converse)</option>
+          <option value="agentcore">Bedrock AgentCore</option>
+        </select>
+        <div id="galactus-modal-model-wrap" style="display:flex;flex-direction:column;gap:4px">
+          <div style="display:flex;align-items:center;gap:5px">
+            <label style="font-size:11px;color:var(--muted);white-space:nowrap">Model:</label>
+            <select id="galactus-modal-model" class="galactus-model-sel"
+                    style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 8px;color:var(--text);font-size:11px;max-width:240px"
+                    onchange="onGalactusModelChange('modal',this.value)">
+              <option value="us.anthropic.claude-sonnet-4-6">Claude Sonnet 4.6 ★ latest</option>
+            </select>
+          </div>
+          <input id="galactus-modal-custom-model" type="text" placeholder="Custom model ID, e.g. us.anthropic.claude-opus-4-6-v1"
+                 style="display:none;font-size:11px;padding:4px 8px;background:var(--surface2);border:1px solid var(--purple);border-radius:5px;color:var(--text);width:100%"/>
+        </div>
+        <button class="btn-ghost btn-sm" onclick="closeGalactusModal()">✕</button>
+      </div>
+    </div>
+    <p class="modal-subtitle" id="galactus-modal-subtitle" style="margin-bottom:10px">
+      Ask about agent security risks, scan failures, remediation steps, or fleet posture.
+    </p>
+
+    <div id="galactus-modal-suggestions" class="galactus-suggestions"></div>
+
+    <div class="galactus-modal-chat galactus-chat">
+      <div class="galactus-messages" id="galactus-modal-messages" style="height:320px">
+        <div class="galactus-msg ai">Hi, I'm <strong>Galactus</strong> — your AI security intelligence agent. I have live access to your agent fleet's scan results, OWASP findings, and runtime events.<br><br>Ask me anything: why a check failed, how to fix a vulnerability, or what your riskiest agents are.</div>
+      </div>
+      <div class="galactus-input-row">
+        <textarea id="galactus-modal-input" placeholder="e.g. Which agents are most at risk? Why did the jailbreak check fail?" onkeydown="if(event.ctrlKey&&event.key==='Enter')submitGalactusQuery('modal')"></textarea>
+        <button class="btn-primary galactus-send" onclick="submitGalactusQuery('modal')" id="galactus-modal-btn">Ask</button>
+      </div>
+      <div style="font-size:10px;color:var(--subtle);padding-top:4px">Ctrl+Enter to send</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+let allEvents = [];
+let agentEventCounts = {};
+let latestScans = {};         // agentId → scan object
+let currentAgentId = null;
+let mcpRows = [];
+let scanPollers = {};
+
+// ── Fetch helpers ─────────────────────────────────────
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function postJSON(url, body) {
+  const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body) });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+// ── Main refresh ──────────────────────────────────────
+async function refresh() {
+  try {
+    const [dash, agents, events] = await Promise.all([
+      fetchJSON('/api/v1/dashboard'),
+      fetchJSON('/api/v1/agents'),
+      fetchJSON('/api/v1/events?hours=24&limit=200'),
+    ]);
+
+    try {
+      const h = await fetchJSON('/health');
+      document.getElementById('mock-badge').innerHTML =
+        h.mock_scan ? '<span class="badge-mock">MOCK SCAN MODE</span>' : '';
+    } catch(_) {}
+
+    allEvents = events;
+    agentEventCounts = {};
+    for (const e of events) agentEventCounts[e.agent_id] = (agentEventCounts[e.agent_id] || 0) + 1;
+
+    // Fetch latest scan per agent in parallel — powers the Risk column
+    const scanResults = await Promise.allSettled(
+      agents.map(a => fetchJSON(`/api/v1/agents/${a.id}/scans?limit=1`).then(s => ({ id: a.id, scan: s[0] || null })))
+    );
+    for (const r of scanResults) {
+      if (r.status === 'fulfilled' && r.value.scan) latestScans[r.value.id] = r.value.scan;
+    }
+
+    updateStats(dash);
+    updateAgents(agents, dash);
+    applyFilters();
+    updateBreakdown(dash.event_breakdown);
+    document.getElementById('refresh-time').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+    // Refresh detail panel if open
+    if (currentAgentId) {
+      const a = agents.find(x => x.id === currentAgentId);
+      if (a) populateDetailPanel(a);
+    }
+  } catch(e) { console.error('Refresh error:', e); }
+}
+
+// ── Stats ─────────────────────────────────────────────
+function updateStats(d) {
+  document.getElementById('s-total').textContent = d.total_agents;
+  document.getElementById('s-approved').textContent = d.approved_agents;
+  document.getElementById('s-blocked').textContent = d.pending_approval;
+  document.getElementById('s-scans').textContent = d.total_scans;
+  document.getElementById('s-events').textContent = d.events_last_24h;
+  document.getElementById('s-critical').textContent = d.critical_events_last_24h;
+}
+
+// ── Agent table ───────────────────────────────────────
+const GATE_BADGE = {
+  passed:  '<span class="badge badge-green">✓ PASSED</span>',
+  failed:  '<span class="badge badge-red">✗ FAILED</span>',
+  running: '<span class="badge badge-yellow"><span class="spinner"></span> SCANNING</span>',
+  pending: '<span class="badge badge-gray">PENDING</span>',
+  error:   '<span class="badge badge-orange">ERROR</span>',
+};
+
+function riskColor(v) {
+  if (v === null || v === undefined) return 'var(--muted)';
+  return v >= 30 ? 'var(--red)' : v >= 10 ? 'var(--yellow)' : 'var(--green)';
+}
+
+function updateAgents(agents, dash) {
+  const tbody = document.getElementById('agents-tbody');
+  if (!agents.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No agents registered yet — click "+ Register Agent" to start.</td></tr>';
+    return;
+  }
+  const topRiskIds = new Set(dash.top_risk_agents.map(a => a.agent_id));
+
+  tbody.innerHTML = agents.map(a => {
+    const scan   = latestScans[a.id];
+    const status = scan ? scan.status : null;
+    const gateBadge = status ? (GATE_BADGE[status] || `<span class="badge badge-gray">${status}</span>`)
+                              : (a.is_approved ? GATE_BADGE.passed : GATE_BADGE.failed);
+
+    const risk = scan ? scan.overall_risk_score : null;
+    const riskCell = (risk !== null && risk !== undefined)
+      ? `<div class="risk-wrap">
+           <div class="risk-bar"><div class="risk-fill" style="width:${Math.min(risk,100)}%;background:${riskColor(risk)}"></div></div>
+           <span class="risk-val" style="color:${riskColor(risk)}">${risk.toFixed(1)}%</span>
+         </div>`
+      : (status === 'running' || status === 'pending'
+          ? '<span class="spinner"></span>'
+          : '<span style="color:var(--subtle);font-size:11px">—</span>');
+
+    const evCnt  = agentEventCounts[a.id] || 0;
+    const evBadge = evCnt > 0
+      ? `<span class="badge ${evCnt >= 5 ? 'badge-red' : 'badge-yellow'}">${evCnt}</span>`
+      : '<span class="badge badge-gray">0</span>';
+    const fwBadge = a.framework
+      ? `<span class="badge badge-blue">${esc(a.framework)}</span>`
+      : '<span class="badge badge-gray">—</span>';
+
+    const active = currentAgentId === a.id ? ' active' : '';
+    return `<tr class="agent-row${active}" onclick="openDetailPanel('${a.id}')">
+      <td>
+        <div style="font-weight:600;${topRiskIds.has(a.id) ? 'color:var(--yellow)' : ''}">${esc(a.name)}</div>
+        <div style="font-size:11px;color:var(--muted)">${esc(a.owner_email)}</div>
+      </td>
+      <td><span class="badge badge-purple">${esc(a.team_name)}</span></td>
+      <td>${fwBadge}</td>
+      <td>${gateBadge}</td>
+      <td>${riskCell}</td>
+      <td>${evBadge}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="btn-ghost btn-sm" onclick="rescan('${a.id}','${esc(a.name)}')">↻ Scan</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Events ────────────────────────────────────────────
+const SEV_COLOR = { low:'var(--blue)', medium:'var(--yellow)', high:'var(--red)', critical:'var(--pink)' };
+const SEV_BADGE = { low:'badge-blue', medium:'badge-yellow', high:'badge-red', critical:'badge-red' };
+const BREAKDOWN_COLORS = {
+  prompt_injection:'var(--red)', pii:'var(--yellow)', jailbreak:'var(--orange)',
+  tool_poisoning:'var(--purple)', content_violation:'var(--pink)',
+};
+
+function applyFilters() {
+  const sev  = document.getElementById('filter-severity').value;
+  const type = document.getElementById('filter-type').value;
+  const filtered = allEvents.filter(e => (!sev || e.severity === sev) && (!type || e.event_type === type));
+  document.getElementById('event-count-badge').textContent = filtered.length;
+
+  const feed = document.getElementById('events-feed');
+  if (!filtered.length) {
+    feed.innerHTML = '<div class="empty">No events match the current filters</div>';
+    return;
+  }
+  feed.innerHTML = filtered.slice(0, 80).map(e => `
+    <div class="event-item">
+      <div class="event-dot" style="background:${SEV_COLOR[e.severity]||'var(--muted)'}"></div>
+      <div class="event-body">
+        <div class="event-title">
+          <span class="badge ${SEV_BADGE[e.severity]||'badge-gray'}" style="margin-right:4px">${e.severity}</span>
+          ${esc(e.event_type.replace(/_/g,' '))}
+        </div>
+        <div class="event-meta">${esc(e.source)} · ${relTime(e.occurred_at)}${e.blocked ? ' · <b>blocked</b>' : ''}</div>
+      </div>
+    </div>`).join('');
+}
+
+function updateBreakdown(bd) {
+  const el = document.getElementById('breakdown');
+  const entries = Object.entries(bd);
+  if (!entries.length) {
+    el.innerHTML = '<span class="empty" style="padding:8px">No events in last 24h</span>';
+    return;
+  }
+  el.innerHTML = entries.sort((a,b) => b[1]-a[1]).map(([k,v]) => `
+    <div style="background:var(--surface2);border-radius:8px;padding:12px 18px;text-align:center;min-width:110px">
+      <div style="font-size:26px;font-weight:700;color:${BREAKDOWN_COLORS[k]||'var(--blue)'}">${v}</div>
+      <div style="font-size:10px;color:var(--muted);text-transform:uppercase;margin-top:4px">${k.replace(/_/g,' ')}</div>
+    </div>`).join('');
+}
+
+// ── Rescan ────────────────────────────────────────────
+async function rescan(agentId, name) {
+  try {
+    await fetch(`/api/v1/agents/${agentId}/scans`, { method:'POST' });
+    toast(`Scan queued for ${name}`, 'info');
+    pollScan(agentId, name, () => refresh());
+    setTimeout(refresh, 1200);
+  } catch(e) { toast('Failed to queue scan', 'error'); }
+}
+
+function pollScan(agentId, agentName, onComplete) {
+  if (scanPollers[agentId]) clearInterval(scanPollers[agentId]);
+  let attempts = 0;
+  scanPollers[agentId] = setInterval(async () => {
+    if (++attempts > 40) { clearInterval(scanPollers[agentId]); delete scanPollers[agentId]; return; }
+    try {
+      const scans = await fetchJSON(`/api/v1/agents/${agentId}/scans?limit=1`);
+      const scan = scans[0];
+      if (!scan) return;
+      latestScans[agentId] = scan;
+      if (scan.status === 'passed' || scan.status === 'failed' || scan.status === 'error') {
+        clearInterval(scanPollers[agentId]);
+        delete scanPollers[agentId];
+        const msg = scan.status === 'passed'
+          ? `✓ ${agentName} PASSED — Risk: ${(scan.overall_risk_score||0).toFixed(1)}%`
+          : `✗ ${agentName} FAILED — Risk: ${(scan.overall_risk_score||0).toFixed(1)}%`;
+        toast(msg, scan.status === 'passed' ? 'success' : 'error');
+        if (onComplete) onComplete();
+        else refresh();
+      }
+    } catch(_) {}
+  }, 3000);
+}
+
+// ── Agent Detail Panel ─────────────────────────────────
+async function openDetailPanel(agentId) {
+  currentAgentId = agentId;
+  document.getElementById('detail-panel').classList.add('open');
+  document.getElementById('panel-backdrop').classList.add('open');
+  document.getElementById('tab-overview').innerHTML = '<div class="empty">Loading...</div>';
+  document.getElementById('tab-scans').innerHTML = '';
+  document.getElementById('tab-events').innerHTML = '';
+  switchTab('overview');
+
+  try {
+    const agents = await fetchJSON('/api/v1/agents');
+    const agent = agents.find(a => a.id === agentId);
+    if (!agent) return;
+    populateDetailPanel(agent);
+    // Highlight row
+    document.querySelectorAll('.agent-row').forEach(r => r.classList.remove('active'));
+    document.querySelectorAll('.agent-row').forEach(r => {
+      if (r.querySelector(`button[onclick*="${agentId}"]`)) r.classList.add('active');
+    });
+  } catch(e) { toast('Failed to load agent', 'error'); }
+}
+
+function populateDetailPanel(agent) {
+  document.getElementById('dp-name').textContent = agent.name;
+  document.getElementById('dp-sub').textContent = `${agent.team_name} · ${agent.owner_email}`;
+
+  const scan = latestScans[agent.id];
+  const gateBadge = agent.is_approved
+    ? '<span class="badge badge-green">✓ Approved</span>'
+    : '<span class="badge badge-red">✗ Blocked</span>';
+
+  let overviewHtml = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      ${gateBadge}
+      ${scan ? `<span style="font-size:11px;color:var(--muted)">Last scan ${relTime(scan.completed_at || scan.created_at)}</span>` : ''}
+    </div>`;
+
+  if (scan && scan.overall_risk_score !== null) {
+    overviewHtml += `
+      <div style="background:var(--surface2);border-radius:10px;padding:16px;margin-bottom:14px;text-align:center">
+        <div style="font-size:38px;font-weight:700;color:${riskColor(scan.overall_risk_score)}">${(scan.overall_risk_score||0).toFixed(1)}%</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-top:4px">Overall Risk Score</div>
+        ${scan.summary ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">${esc(scan.summary)}</div>` : ''}
+      </div>`;
+
+    if (scan.owasp_failures && scan.owasp_failures.length) {
+      overviewHtml += `
+        <div style="margin-bottom:12px">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:6px">OWASP Failures</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            ${scan.owasp_failures.map(f => `<span class="badge badge-red">${f}</span>`).join('')}
+          </div>
+        </div>`;
+    }
+    if (scan.remediation_hints && scan.remediation_hints.length) {
+      overviewHtml += `
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-bottom:6px">Remediation</div>
+          ${scan.remediation_hints.map(h => `
+            <div style="font-size:12px;padding:7px 10px;background:rgba(245,158,11,.07);border-left:2px solid var(--yellow);border-radius:0 5px 5px 0;margin-bottom:5px">
+              ${esc(h)}
+            </div>`).join('')}
+        </div>`;
+    }
+  }
+
+  const _modelDisp = (agent.provider_config && (agent.provider_config.model || agent.provider_config.model_id))
+    || agent.bedrock_model_id || '—';
+  const _provDisp  = agent.provider || (agent.bedrock_model_id ? 'bedrock' : '—');
+  overviewHtml += `
+    <div class="form-section-title" style="margin-bottom:8px">Agent Info</div>
+    ${infoRows([
+      ['Endpoint',   agent.endpoint_url],
+      ['Provider',   _provDisp],
+      ['Model',      _modelDisp],
+      ['Framework',  agent.framework || '—'],
+      ['Registered', new Date(agent.created_at).toLocaleString()],
+    ])}`;
+
+  if (agent.mcp_servers && agent.mcp_servers.length) {
+    overviewHtml += `
+      <div style="margin-top:14px">
+        <div class="form-section-title" style="margin-bottom:8px">MCP Servers</div>
+        ${agent.mcp_servers.map(s => `
+          <div style="background:var(--surface2);border-radius:6px;padding:8px 12px;margin-bottom:5px">
+            <div style="font-size:12px;font-weight:600">${esc(s.name)}</div>
+            <div style="font-size:11px;color:var(--muted)">${esc(s.url)}</div>
+            ${s.description ? `<div style="font-size:11px;color:var(--subtle);margin-top:2px">${esc(s.description)}</div>` : ''}
+          </div>`).join('')}
+      </div>`;
+  }
+
+  // NeMo Guardrails status
+  if (agent.nemo_guardrails_config) {
+    const nc = agent.nemo_guardrails_config;
+    const rails = Array.isArray(nc.rails) ? nc.rails : [];
+    overviewHtml += `
+      <div style="margin-top:14px">
+        <div class="form-section-title" style="margin-bottom:8px">NeMo Guardrails</div>
+        <div style="background:rgba(16,185,129,.05);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:10px 12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span class="badge badge-green" style="font-size:10px">● Active</span>
+            ${nc.server_url ? `<span style="font-size:11px;color:var(--muted)">${esc(nc.server_url)}</span>` : ''}
+          </div>
+          ${rails.length ? `
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px">Active Rails</div>
+            <div style="display:flex;gap:5px;flex-wrap:wrap">
+              ${rails.map(r => `<span class="badge badge-green" style="font-size:10px">${esc(r)}</span>`).join('')}
+            </div>` : ''}
+          ${nc.config_path ? `<div style="font-size:11px;color:var(--subtle);margin-top:6px">Config: <code style="color:var(--muted)">${esc(nc.config_path)}</code></div>` : ''}
+        </div>
+      </div>`;
+  } else {
+    overviewHtml += `
+      <div style="margin-top:14px">
+        <div class="form-section-title" style="margin-bottom:8px">NeMo Guardrails</div>
+        <div style="font-size:12px;color:var(--subtle);padding:8px;background:var(--surface2);border-radius:6px">
+          Not configured —
+          <a href="#" onclick="closeDetailPanel();openRegModal();return false" style="color:var(--blue);text-decoration:none">add during agent registration</a>
+          or re-register to enable runtime rails.
+        </div>
+      </div>`;
+  }
+
+  overviewHtml += `
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn-primary btn-sm" onclick="rescan('${agent.id}','${esc(agent.name)}')">↻ Re-scan Agent</button>
+    </div>`;
+
+  document.getElementById('tab-overview').innerHTML = overviewHtml;
+
+  // Scan history tab
+  fetchJSON(`/api/v1/agents/${agent.id}/scans?limit=10`).then(scans => {
+    document.getElementById('tab-scans').innerHTML = scans.length
+      ? scans.map(renderScanCard).join('')
+      : '<div class="empty">No scans yet</div>';
+  }).catch(() => {
+    document.getElementById('tab-scans').innerHTML = '<div class="empty">Failed to load scans</div>';
+  });
+
+  // Guardrails tab — populated from latest scan's guardrail_config
+  if (scan && scan.guardrail_config) {
+    document.getElementById('tab-guardrails').innerHTML = renderGuardrailConfig(scan.guardrail_config);
+  } else {
+    document.getElementById('tab-guardrails').innerHTML = '<div class="empty">Run a scan to generate provider-specific guardrail recommendations</div>';
+  }
+
+  // Galactus tab
+  initGalactusTab(agent);
+
+  // Events tab
+  const agentEvs = allEvents.filter(e => e.agent_id === agent.id).slice(0, 60);
+  document.getElementById('tab-events').innerHTML = agentEvs.length
+    ? agentEvs.map(e => `
+      <div class="event-item">
+        <div class="event-dot" style="background:${SEV_COLOR[e.severity]||'var(--muted)'}"></div>
+        <div class="event-body">
+          <div class="event-title"><span class="badge ${SEV_BADGE[e.severity]||'badge-gray'}" style="margin-right:4px">${e.severity}</span>${esc(e.event_type.replace(/_/g,' '))}</div>
+          <div class="event-meta">${esc(e.source)} · ${relTime(e.occurred_at)}${e.blocked ? ' · <b>blocked</b>' : ''}</div>
+        </div>
+      </div>`).join('')
+    : '<div class="empty">No events for this agent in the last 24h</div>';
+}
+
+function infoRows(rows) {
+  return rows.map(([k,v]) => `
+    <div class="info-row">
+      <div class="info-key">${k}</div>
+      <div class="info-val">${esc(String(v))}</div>
+    </div>`).join('');
+}
+
+function renderScanCard(s) {
+  const sb = GATE_BADGE[s.status] || `<span class="badge badge-gray">${s.status}</span>`;
+  const scores = [
+    ['Injection',  s.prompt_injection_score,      'var(--red)'],
+    ['Jailbreak',  s.jailbreak_score,             'var(--orange)'],
+    ['PII Leak',   s.pii_leak_score,              'var(--yellow)'],
+    ['Sys Prompt', s.system_prompt_leakage_score, 'var(--pink)'],
+    ['Exc Agency', s.excessive_agency_score,       'var(--purple)'],
+    ['MCP',        s.mcp_poisoning_score,         'var(--cyan)'],
+    ['Ins Output', s.insecure_output_score,       'var(--blue)'],
+    ['Misinfo',    s.misinformation_score,        'var(--orange)'],
+    ['Content',    s.content_violation_score,     'var(--muted)'],
+    ['Overall',    s.overall_risk_score,          'var(--red)'],
+  ].filter(([,v]) => v !== null && v !== undefined);
+
+  return `
+    <div class="scan-card">
+      <div class="scan-card-header">
+        ${sb}
+        <span style="font-size:11px;color:var(--muted)">${relTime(s.created_at)} · ${s.triggered_by}</span>
+        ${s.overall_risk_score !== null ? `<span style="margin-left:auto;font-weight:600;font-size:12px;color:${riskColor(s.overall_risk_score)}">Risk: ${(s.overall_risk_score||0).toFixed(1)}%</span>` : ''}
+      </div>
+      ${scores.length ? `<div class="scan-scores-grid">
+        ${scores.map(([label,val,color]) => `
+          <div class="score-item">
+            <div class="score-val" style="color:${(val||0)>0 ? color : 'var(--green)'}">${(val||0).toFixed(1)}%</div>
+            <div class="score-label">${label}</div>
+          </div>`).join('')}
+      </div>` : ''}
+      ${s.summary ? `<div style="padding:8px 12px;font-size:11px;color:var(--muted);border-top:1px solid var(--border)">${esc(s.summary)}</div>` : ''}
+      ${s.owasp_failures && s.owasp_failures.length ? `
+        <div style="padding:6px 12px;border-top:1px solid var(--border);display:flex;gap:4px;flex-wrap:wrap">
+          ${s.owasp_failures.map(f => `<span class="badge badge-red">${f}</span>`).join('')}
+        </div>` : ''}
+      ${s.remediation_hints && s.remediation_hints.length ? `
+        <div style="padding:8px 12px;border-top:1px solid var(--border)">
+          ${s.remediation_hints.slice(0,2).map(h => `<div style="font-size:11px;color:var(--muted);margin-bottom:3px">• ${esc(h)}</div>`).join('')}
+        </div>` : ''}
+      ${renderProbeFindings(s.findings || (s.raw_report && s.raw_report.probe_results), s.id)}
+    </div>`;
+}
+
+function renderProbeFindings(probeResults, scanId) {
+  if (!probeResults || !probeResults.length) return '';
+  const failed = probeResults.filter(p => !p.passed);
+  const catColor = {
+    prompt_injection:'var(--red)', pii_leak:'var(--yellow)', jailbreak:'var(--orange)',
+    system_prompt_leakage:'var(--pink)', excessive_agency:'var(--purple)',
+    insecure_output:'var(--blue)', mcp_poisoning:'var(--cyan)',
+    misinformation:'var(--orange)',
+  };
+  const catLabel = {
+    prompt_injection:'INJECTION', pii_leak:'PII LEAK', jailbreak:'JAILBREAK',
+    system_prompt_leakage:'SYS PROMPT LEAK', excessive_agency:'EXC AGENCY',
+    insecure_output:'INS OUTPUT', mcp_poisoning:'MCP POISON',
+    misinformation:'MISINFORMATION',
+  };
+  const sevClass = { critical:'sev-critical', high:'sev-high', medium:'sev-medium', low:'sev-low' };
+  const tid = `pb-${(scanId||'x').slice(-8)}`;
+  const summary = failed.length
+    ? `<span style="color:var(--red);font-weight:600">${failed.length} bypassed</span>`
+    : `<span style="color:var(--green);font-weight:600">all passed</span>`;
+  return `
+    <div class="probe-toggle" onclick="var e=document.getElementById('${tid}');e.classList.toggle('hidden');this.querySelector('.pchev').textContent=e.classList.contains('hidden')?'▶':'▼'">
+      <span style="font-size:11px;font-weight:600;color:var(--muted)">🔬 Probe Evidence</span>
+      <span style="font-size:11px;color:var(--muted)">${probeResults.length - failed.length}/${probeResults.length} passed · ${summary} <span class="pchev">▶</span></span>
+    </div>
+    <div id="${tid}" class="probe-list hidden">
+      ${failed.length === 0
+        ? '<div style="font-size:11px;color:var(--green);padding:4px 0">✓ All probes resisted — no bypass evidence found.</div>'
+        : failed.map(p => {
+            const color  = catColor[p.category] || 'var(--red)';
+            const label  = catLabel[p.category] || (p.category||'UNKNOWN').replace(/_/g,' ').toUpperCase();
+            const sc     = sevClass[p.severity] || '';
+            const owaspB = p.owasp    ? `<span class="badge badge-purple" style="font-size:9px;padding:1px 5px">${esc(p.owasp)}</span>` : '';
+            const sevB   = p.severity ? `<span class="badge ${sc}" style="font-size:9px;padding:1px 5px">${esc(p.severity)}</span>` : '';
+            const nameB  = p.name     ? `<span style="font-size:10px;color:var(--muted)">${esc(p.name)}</span>` : '';
+            return `
+          <div class="probe-card" style="border-left:3px solid ${color}">
+            <div style="padding:6px 10px;background:rgba(0,0,0,.2);display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              <span style="font-size:10px;font-weight:700;color:${color}">${label}</span>
+              <span class="badge badge-red" style="font-size:9px;padding:1px 5px">BYPASSED</span>
+              ${owaspB}${sevB}${nameB}
+              ${p.matched_pattern ? `<span style="font-size:10px;color:var(--subtle)">matched: <code style="color:var(--muted)">${esc(p.matched_pattern)}</code></span>` : ''}
+            </div>
+            <div style="padding:8px 10px">
+              <div class="probe-section-label">Adversarial Prompt</div>
+              <div class="probe-mono" style="color:var(--text);background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.15);padding:6px 8px;border-radius:4px;margin-bottom:8px">${esc(p.probe)}</div>
+              <div class="probe-section-label">Agent Response</div>
+              <div class="probe-mono" style="color:var(--yellow);background:rgba(245,158,11,.04);border:1px solid rgba(245,158,11,.15);padding:6px 8px;border-radius:4px;margin-bottom:${p.risk_explanation || p.remediation ? '8px' : '0'}">${esc(p.response)}</div>
+              ${p.risk_explanation ? `
+              <div class="probe-section-label">Why This Is a Risk</div>
+              <div class="probe-risk-text">${esc(p.risk_explanation)}</div>` : ''}
+              ${p.remediation ? `
+              <div class="probe-section-label">Remediation</div>
+              <div style="font-size:11px;color:var(--muted);margin-bottom:4px;line-height:1.5">${esc(p.remediation.text||'')}</div>
+              ${p.remediation.code ? `<pre class="probe-code-example">${esc(p.remediation.code)}</pre>` : ''}` : ''}
+            </div>
+          </div>`;
+          }).join('')
+      }
+    </div>`;
+}
+
+function renderGuardrailConfig(gc) {
+  if (!gc) return '<div class="empty">No guardrail recommendations available</div>';
+  const provBadge = `<span class="badge badge-blue" style="font-size:10px">${esc(gc.generated_for_provider || 'custom')}</span>`;
+  let html = `<div style="padding:4px 0 12px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span style="font-size:13px;font-weight:600">Recommended Guardrail Setup</span>
+      ${provBadge}
+    </div>`;
+
+  // Priority actions
+  if (gc.priority_actions && gc.priority_actions.length) {
+    html += `<div style="margin-bottom:16px">
+      <div class="form-section-title" style="margin-bottom:8px">Priority Actions</div>
+      ${gc.priority_actions.map((a,i) => {
+        const isCrit = a.startsWith('CRITICAL');
+        const isHigh = a.startsWith('HIGH');
+        const color  = isCrit ? 'var(--red)' : isHigh ? 'var(--orange)' : 'var(--yellow)';
+        const bg     = isCrit ? 'rgba(239,68,68,.07)' : isHigh ? 'rgba(249,115,22,.06)' : 'rgba(245,158,11,.06)';
+        return `<div style="display:flex;gap:8px;padding:7px 10px;background:${bg};border-left:2px solid ${color};border-radius:0 5px 5px 0;margin-bottom:5px;font-size:12px;line-height:1.5">
+          <span style="font-weight:700;color:${color};white-space:nowrap">${i+1}.</span>
+          <span>${esc(a)}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  // System prompt additions
+  if (gc.system_prompt_additions && gc.system_prompt_additions.length) {
+    const tid = `sp-${Math.random().toString(36).slice(-6)}`;
+    html += `<div style="margin-bottom:16px">
+      <div class="form-section-title" style="margin-bottom:8px">System Prompt Additions</div>
+      <div class="probe-toggle" onclick="var e=document.getElementById('${tid}');e.classList.toggle('hidden');this.querySelector('.spchev').textContent=e.classList.contains('hidden')?'▶':'▼'">
+        <span style="font-size:11px;color:var(--muted)">${gc.system_prompt_additions.length} clause${gc.system_prompt_additions.length>1?'s':''} recommended</span>
+        <span class="spchev">▶</span>
+      </div>
+      <div id="${tid}" class="hidden">
+        ${gc.system_prompt_additions.map(s => `<pre class="probe-code-example" style="color:#86efac;white-space:pre-wrap;word-break:break-word">${esc(s)}</pre>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // LlamaFirewall
+  if (gc.llamafirewall_config) {
+    const lf = gc.llamafirewall_config;
+    const tid = `lf-${Math.random().toString(36).slice(-6)}`;
+    html += `<div style="margin-bottom:16px">
+      <div class="form-section-title" style="margin-bottom:8px">LlamaFirewall (Input Guard — All Providers)</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${esc(lf.description)}</div>
+      <div style="font-size:11px;color:var(--subtle);margin-bottom:6px">Install: <code style="color:var(--muted)">${esc(lf.install)}</code></div>
+      <div class="probe-toggle" onclick="var e=document.getElementById('${tid}');e.classList.toggle('hidden');this.querySelector('.lfchev').textContent=e.classList.contains('hidden')?'▶':'▼'">
+        <span style="font-size:11px;color:var(--muted)">View code</span>
+        <span class="lfchev">▶</span>
+      </div>
+      <div id="${tid}" class="hidden"><pre class="probe-code-example">${esc(lf.code)}</pre></div>
+    </div>`;
+  }
+
+  // LLM Guard
+  if (gc.llm_guard_scanners) {
+    const lg = gc.llm_guard_scanners;
+    const tid = `lg-${Math.random().toString(36).slice(-6)}`;
+    html += `<div style="margin-bottom:16px">
+      <div class="form-section-title" style="margin-bottom:8px">LLM Guard (Output Scanner — All Providers)</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${esc(lg.description)}</div>
+      <div style="font-size:11px;color:var(--subtle);margin-bottom:6px">Install: <code style="color:var(--muted)">${esc(lg.install)}</code></div>
+      <div class="probe-toggle" onclick="var e=document.getElementById('${tid}');e.classList.toggle('hidden');this.querySelector('.lgchev').textContent=e.classList.contains('hidden')?'▶':'▼'">
+        <span style="font-size:11px;color:var(--muted)">View code</span>
+        <span class="lgchev">▶</span>
+      </div>
+      <div id="${tid}" class="hidden"><pre class="probe-code-example">${esc(lg.code)}</pre></div>
+    </div>`;
+  }
+
+  // Bedrock Guardrail policy
+  if (gc.bedrock_guardrail_policy) {
+    const bg = gc.bedrock_guardrail_policy;
+    const tid = `bg-${Math.random().toString(36).slice(-6)}`;
+    html += `<div style="margin-bottom:16px">
+      <div class="form-section-title" style="margin-bottom:8px">Bedrock Guardrail Policy</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${esc(bg.description)}</div>
+      <div class="probe-toggle" onclick="var e=document.getElementById('${tid}');e.classList.toggle('hidden');this.querySelector('.bgchev').textContent=e.classList.contains('hidden')?'▶':'▼'">
+        <span style="font-size:11px;color:var(--muted)">View policy JSON</span>
+        <span class="bgchev">▶</span>
+      </div>
+      <div id="${tid}" class="hidden"><pre class="probe-code-example">${esc(JSON.stringify(bg.policy, null, 2))}</pre></div>
+    </div>`;
+  }
+
+  // Tool approval config
+  if (gc.tool_approval_config) {
+    const ta = gc.tool_approval_config;
+    const tid = `ta-${Math.random().toString(36).slice(-6)}`;
+    html += `<div style="margin-bottom:16px">
+      <div class="form-section-title" style="margin-bottom:8px">Tool Approval Gate (Excessive Agency)</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${esc(ta.description)}</div>
+      <div class="probe-toggle" onclick="var e=document.getElementById('${tid}');e.classList.toggle('hidden');this.querySelector('.tachev').textContent=e.classList.contains('hidden')?'▶':'▼'">
+        <span style="font-size:11px;color:var(--muted)">View code</span>
+        <span class="tachev">▶</span>
+      </div>
+      <div id="${tid}" class="hidden"><pre class="probe-code-example">${esc(ta.code)}</pre></div>
+    </div>`;
+  }
+
+  // Output sanitisation
+  if (gc.output_sanitisation) {
+    const os = gc.output_sanitisation;
+    const tid = `os-${Math.random().toString(36).slice(-6)}`;
+    html += `<div style="margin-bottom:16px">
+      <div class="form-section-title" style="margin-bottom:8px">Output Sanitisation (Insecure Output)</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:5px">${esc(os.description)}</div>
+      ${os.csp_header ? `<div style="font-size:11px;color:var(--subtle);margin-bottom:6px">CSP: <code style="color:var(--muted)">${esc(os.csp_header)}</code></div>` : ''}
+      <div class="probe-toggle" onclick="var e=document.getElementById('${tid}');e.classList.toggle('hidden');this.querySelector('.oschev').textContent=e.classList.contains('hidden')?'▶':'▼'">
+        <span style="font-size:11px;color:var(--muted)">View browser + server code</span>
+        <span class="oschev">▶</span>
+      </div>
+      <div id="${tid}" class="hidden">
+        <div style="font-size:10px;font-weight:600;color:var(--subtle);margin-bottom:3px;margin-top:4px">Frontend (JavaScript)</div>
+        <pre class="probe-code-example">${esc(os.frontend_js)}</pre>
+        <div style="font-size:10px;font-weight:600;color:var(--subtle);margin-bottom:3px;margin-top:6px">Backend (Python)</div>
+        <pre class="probe-code-example">${esc(os.backend_python)}</pre>
+      </div>
+    </div>`;
+  }
+
+  // NeMo Guardrails config (runtime rails)
+  if (gc.nemo_guardrails_config) {
+    const ng = gc.nemo_guardrails_config;
+    const tidCfg = `ng-cfg-${Math.random().toString(36).slice(-6)}`;
+    const tidCo  = `ng-co-${Math.random().toString(36).slice(-6)}`;
+    const tidBr  = `ng-br-${Math.random().toString(36).slice(-6)}`;
+    const railBadges = (ng.active_rails || []).map(r =>
+      `<span class="badge badge-green" style="font-size:10px">${esc(r)}</span>`).join('');
+    html += `<div style="margin-bottom:16px;border:1px solid rgba(16,185,129,.2);border-radius:8px;overflow:hidden">
+      <div style="padding:10px 14px;background:rgba(16,185,129,.05);border-bottom:1px solid rgba(16,185,129,.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:13px;font-weight:600;color:#34d399">NeMo Guardrails</span>
+        <span class="badge badge-green" style="font-size:10px">Runtime Rails</span>
+        ${railBadges}
+      </div>
+      <div style="padding:10px 14px">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.5">${esc(ng.description || '')}</div>
+        ${ng.install ? `<div style="font-size:11px;color:var(--subtle);margin-bottom:10px">Install: <code style="color:#93c5fd">${esc(ng.install)}</code></div>` : ''}
+
+        ${ng.config_yml ? `
+        <div class="probe-toggle" onclick="var e=document.getElementById('${tidCfg}');e.classList.toggle('hidden');this.querySelector('.ngcfgchev').textContent=e.classList.contains('hidden')?'▶':'▼'" style="margin-bottom:4px">
+          <span style="font-size:11px;font-weight:600;color:#34d399">config.yml</span>
+          <span class="ngcfgchev">▶</span>
+        </div>
+        <div id="${tidCfg}" class="hidden" style="margin-bottom:8px">
+          <pre class="probe-code-example" style="color:#86efac">${esc(ng.config_yml)}</pre>
+        </div>` : ''}
+
+        ${ng.rails_co ? `
+        <div class="probe-toggle" onclick="var e=document.getElementById('${tidCo}');e.classList.toggle('hidden');this.querySelector('.ngcochev').textContent=e.classList.contains('hidden')?'▶':'▼'" style="margin-bottom:4px">
+          <span style="font-size:11px;font-weight:600;color:#34d399">rails.co <span style="font-weight:400;color:var(--muted)">(Colang flows)</span></span>
+          <span class="ngcochev">▶</span>
+        </div>
+        <div id="${tidCo}" class="hidden" style="margin-bottom:8px">
+          <pre class="probe-code-example" style="color:#fde68a">${esc(ng.rails_co)}</pre>
+        </div>` : ''}
+
+        ${ng.bridge_code ? `
+        <div class="probe-toggle" onclick="var e=document.getElementById('${tidBr}');e.classList.toggle('hidden');this.querySelector('.ngbrchev').textContent=e.classList.contains('hidden')?'▶':'▼'" style="margin-bottom:4px">
+          <span style="font-size:11px;font-weight:600;color:#34d399">Bridge code <span style="font-weight:400;color:var(--muted)">(Python integration)</span></span>
+          <span class="ngbrchev">▶</span>
+        </div>
+        <div id="${tidBr}" class="hidden">
+          <pre class="probe-code-example">${esc(ng.bridge_code)}</pre>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+function closeDetailPanel() {
+  currentAgentId = null;
+  document.getElementById('detail-panel').classList.remove('open');
+  document.getElementById('panel-backdrop').classList.remove('open');
+  document.querySelectorAll('.agent-row').forEach(r => r.classList.remove('active'));
+}
+
+// ── Register Modal ─────────────────────────────────────
+function openRegModal() {
+  document.getElementById('reg-modal').classList.add('open');
+  document.getElementById('scan-progress').classList.remove('active');
+  document.getElementById('register-form').style.display = '';
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('submit-btn').textContent = 'Register & Scan';
+  mcpRows = [];
+  renderMcpList();
+  // Reset provider panels
+  document.querySelectorAll('.provider-panel').forEach(p => p.classList.add('hidden'));
+  document.getElementById('provider-sel').value = '';
+  // Reset NeMo toggle
+  document.getElementById('nemo-toggle').checked = false;
+}
+
+function closeRegModal() {
+  document.getElementById('reg-modal').classList.remove('open');
+  document.getElementById('register-form').reset();
+  mcpRows = [];
+  renderMcpList();
+}
+
+function addMcpRow() {
+  mcpRows.push({ name:'', url:'', description:'' });
+  renderMcpList();
+}
+
+function removeMcpRow(i) {
+  mcpRows.splice(i, 1);
+  renderMcpList();
+}
+
+function renderMcpList() {
+  const el = document.getElementById('mcp-list');
+  if (!mcpRows.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--subtle)">No MCP servers added</div>';
+    return;
+  }
+  el.innerHTML = mcpRows.map((row, i) => `
+    <div class="mcp-entry">
+      <div class="mcp-entry-header">
+        <input placeholder="Server name (e.g. slack)" value="${esc(row.name)}" oninput="mcpRows[${i}].name=this.value"/>
+        <input placeholder="URL (e.g. http://mcp:8080)" value="${esc(row.url)}" oninput="mcpRows[${i}].url=this.value"/>
+        <button type="button" class="btn-icon" onclick="removeMcpRow(${i})">✕</button>
+      </div>
+      <input placeholder="Description (optional — scanned for injection patterns)" value="${esc(row.description)}" style="font-size:12px;padding:5px 8px" oninput="mcpRows[${i}].description=this.value"/>
+    </div>`).join('');
+}
+
+function toggleNemoPanel(checked) {
+  document.getElementById('nemo-panel').classList.toggle('hidden', !checked);
+}
+
+function onProviderChange(val) {
+  document.querySelectorAll('.provider-panel').forEach(p => p.classList.add('hidden'));
+  document.getElementById('nemo-toggle').checked = false; // keep NeMo state clean on provider switch
+  if (val === 'openai' || val === 'anthropic') {
+    document.getElementById('prov-openai').classList.remove('hidden');
+  } else if (val === 'ollama') {
+    document.getElementById('prov-ollama').classList.remove('hidden');
+  } else if (val === 'openai_compatible') {
+    document.getElementById('prov-openai_compatible').classList.remove('hidden');
+  } else if (val === 'bedrock') {
+    document.getElementById('prov-bedrock').classList.remove('hidden');
+  }
+}
+
+async function submitAgent(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Registering...';
+
+  const fd = new FormData(e.target);
+  const toolsRaw = fd.get('allowed_tools_raw') || '';
+  const provider = fd.get('provider') || null;
+
+  // Build provider_config from active provider panel
+  let provider_config = null;
+  if (provider === 'openai' || provider === 'anthropic') {
+    provider_config = {};
+    const m = fd.get('pc_model');       if (m) provider_config.model = m;
+    const k = fd.get('pc_api_key_env'); if (k) provider_config.api_key_env = k;
+  } else if (provider === 'ollama') {
+    provider_config = {};
+    const m = fd.get('pc_ollama_model'); if (m) provider_config.model = m;
+    const u = fd.get('pc_base_url');     if (u) provider_config.base_url = u;
+  } else if (provider === 'openai_compatible') {
+    provider_config = {};
+    const m = fd.get('pc_compat_model');       if (m) provider_config.model = m;
+    const u = fd.get('pc_compat_base_url');    if (u) provider_config.base_url = u;
+    const k = fd.get('pc_compat_api_key_env'); if (k) provider_config.api_key_env = k;
+  } else if (provider === 'bedrock') {
+    provider_config = {};
+    const mid = fd.get('pc_bedrock_model_id'); if (mid) provider_config.model_id = mid;
+    const r   = fd.get('pc_region');           if (r)   provider_config.region = r;
+    const gid = fd.get('pc_guardrail_id');     if (gid) provider_config.guardrail_id = gid;
+    const gv  = fd.get('pc_guardrail_version');if (gv)  provider_config.guardrail_version = gv;
+  }
+
+  // Build nemo_guardrails_config if enabled
+  let nemo_guardrails_config = null;
+  if (document.getElementById('nemo-toggle').checked) {
+    nemo_guardrails_config = { enabled: true };
+    const su = fd.get('nemo_server_url');  if (su) nemo_guardrails_config.server_url   = su;
+    const cp = fd.get('nemo_config_path'); if (cp) nemo_guardrails_config.config_path  = cp;
+    const nr = fd.get('nemo_rails');
+    if (nr) nemo_guardrails_config.rails = nr.split(',').map(r => r.trim()).filter(Boolean);
+  }
+
+  const body = {
+    name:          fd.get('name'),
+    team_name:     fd.get('team_name'),
+    owner_email:   fd.get('owner_email'),
+    slack_channel: fd.get('slack_channel') || null,
+    endpoint_url:  fd.get('endpoint_url'),
+    framework:     fd.get('framework') || null,
+    provider,
+    provider_config,
+    nemo_guardrails_config,
+    mcp_servers:   mcpRows.filter(r => r.name || r.url),
+    allowed_tools: toolsRaw.split(',').map(t => t.trim()).filter(Boolean),
+  };
+
+  try {
+    const agent = await postJSON('/api/v1/agents', body);
+    toast('Agent registered! Red-team scan queued.', 'success');
+
+    // Show inline progress, keep modal open until scan finishes
+    document.getElementById('scan-progress').classList.add('active');
+    document.getElementById('scan-progress-msg').textContent = `Scanning "${agent.name}"...`;
+    e.target.reset();
+    mcpRows = [];
+    renderMcpList();
+
+    setTimeout(refresh, 800);
+
+    pollScan(agent.id, agent.name, () => {
+      document.getElementById('scan-progress').classList.remove('active');
+      btn.disabled = false;
+      btn.textContent = 'Register & Scan';
+      closeRegModal();
+      refresh();
+    });
+  } catch(err) {
+    toast(`Error: ${err.message}`, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Register & Scan';
+  }
+}
+
+document.getElementById('reg-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeRegModal();
+});
+
+// ── Utilities ─────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function relTime(iso) {
+  if (!iso) return '—';
+  const d = (Date.now() - new Date(iso)) / 1000;
+  if (d < 60)    return `${Math.floor(d)}s ago`;
+  if (d < 3600)  return `${Math.floor(d/60)}m ago`;
+  if (d < 86400) return `${Math.floor(d/3600)}h ago`;
+  return new Date(iso).toLocaleDateString();
+}
+function toast(msg, type='success') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 5000);
+}
+
+// ── Galactus Analytics Widget ─────────────────────────
+let galactusInsightTimer = null;
+let galactusInsightLoaded = false;
+
+async function loadGalactusInsight() {
+  const body = document.getElementById('galactus-insight-body');
+  const btn  = document.getElementById('insight-refresh-btn');
+  if (!body) return;
+
+  // Skeleton loading state
+  body.innerHTML = `
+    <div style="width:100%">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;color:var(--subtle);font-size:12px">
+        <span style="color:var(--purple);font-size:14px">⬡</span>
+        <span>Galactus is analyzing your fleet...</span>
+        <div class="spinner" style="margin-left:4px"></div>
+      </div>
+      <div class="insight-skeleton" style="width:85%"></div>
+      <div class="insight-skeleton" style="width:70%"></div>
+      <div class="insight-skeleton" style="width:92%"></div>
+      <div class="insight-skeleton" style="width:60%"></div>
+    </div>`;
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+
+  try {
+    const data = await fetchJSON('/api/v1/galactus/insight');
+    _renderGalactusInsight(data);
+    galactusInsightLoaded = true;
+
+    // Auto-refresh every 5 minutes after first successful load
+    clearTimeout(galactusInsightTimer);
+    galactusInsightTimer = setTimeout(loadGalactusInsight, 5 * 60 * 1000);
+  } catch (err) {
+    const raw = err.message || '';
+    let msg = raw;
+    try { msg = JSON.parse(raw).detail || raw; } catch(_) {}
+    const isBoto3Err = msg.includes('boto3') || msg.includes('No module named');
+    const isCredErr  = !isBoto3Err && (
+      msg.includes('credentials not configured') ||
+      msg.includes('Unable to locate credentials') ||
+      msg.includes('NoCredentialProviders') ||
+      msg.includes('NoRegion')
+    );
+    body.innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:10px;color:var(--muted);font-size:12px">
+        <span style="color:var(--yellow);font-size:14px;flex-shrink:0">⚠</span>
+        <span>${isBoto3Err
+          ? 'boto3 not installed. Run: <code style="color:var(--purple)">pip install boto3</code> then restart the server.'
+          : isCredErr
+            ? 'AWS credentials not configured. Set <code style="color:var(--purple)">AWS_ACCESS_KEY_ID</code> / <code style="color:var(--purple)">AWS_SECRET_ACCESS_KEY</code> and ensure Bedrock model access is enabled.'
+            : esc(msg)
+        }</span>
+      </div>`;
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '↻ Analyze'; }
+  }
+}
+
+function _renderGalactusInsight(data) {
+  const body = document.getElementById('galactus-insight-body');
+  const ts   = document.getElementById('insight-timestamp');
+  const mb   = document.getElementById('insight-model-badge');
+  if (!body) return;
+
+  if (ts) {
+    ts.textContent = 'Generated ' + new Date(data.generated_at).toLocaleTimeString();
+  }
+  if (mb && data.model_id) {
+    const label = data.model_id.split('.').pop().replace(/-v\d+:\d+$/, '');
+    mb.textContent = label;
+  }
+
+  // Parse the summary into styled blocks
+  const lines = (data.summary || '').split('\n');
+  let html = '';
+  for (const line of lines) {
+    const t = line.trim();
+    if (!t) continue;
+    if (/^#{1,3}\s/.test(t)) {
+      html += `<div class="insight-heading">${esc(t.replace(/^#+\s*/, ''))}</div>`;
+    } else if (/^\d+\.\s/.test(t)) {
+      const num  = t.match(/^(\d+)\./)[1];
+      const text = t.replace(/^\d+\.\s*/, '');
+      html += `<div class="insight-summary-line"><span class="bullet">${esc(num)}.</span><span>${esc(text)}</span></div>`;
+    } else if (/^[-•*]\s/.test(t)) {
+      html += `<div class="insight-summary-line"><span class="bullet">•</span><span>${esc(t.replace(/^[-•*]\s*/, ''))}</span></div>`;
+    } else {
+      html += `<div class="insight-summary-line"><span>${esc(t)}</span></div>`;
+    }
+  }
+
+  const modelLabel = data.model_id
+    ? data.model_id.split('.').pop().replace(/-v\d+:\d+$/, '')
+    : '';
+
+  body.innerHTML = `
+    <div style="width:100%">
+      <div style="column-count:1">${html}</div>
+      ${modelLabel ? `<div style="margin-top:10px;font-size:10px;color:var(--subtle);border-top:1px solid rgba(139,92,246,.15);padding-top:6px;display:flex;align-items:center;gap:6px">
+        <span style="color:var(--purple)">⬡</span>
+        Generated by ${esc(modelLabel)} · AWS Bedrock
+        <button class="btn-sm btn-galactus" onclick="openGalactusModal(null)" style="margin-left:auto;font-size:10px;padding:2px 8px">Ask follow-up ›</button>
+      </div>` : ''}
+    </div>`;
+}
+
+// ── Galactus ───────────────────────────────────────────
+
+let galactusModalAgentId = null;    // null = fleet-level query
+let galactusModalSession = null;    // session UUID for AgentCore multi-turn
+let galactusPanelSession = null;    // per-agent panel session
+let galactusAgentcoreAvailable = false;
+let galactusModels = [];            // [{modelId, modelName, providerName}]
+let galactusDefaultModel = '';      // default modelId from server config
+
+// Load available models from Bedrock (live or curated fallback)
+async function loadGalactusModels() {
+  try {
+    const data = await fetchJSON('/api/v1/galactus/models');
+    galactusModels = data.models || [];
+    galactusDefaultModel = data.default_model_id || '';
+    _populateModelSelects();
+  } catch(_) { /* silently fall through — UI still works without dynamic models */ }
+}
+
+function _populateModelSelects() {
+  if (!galactusModels.length) return;
+  const opts = galactusModels.map(m => {
+    const sel = m.modelId === galactusDefaultModel ? ' selected' : '';
+    return `<option value="${esc(m.modelId)}"${sel}>${esc(m.modelName)}</option>`;
+  }).join('') + '<option value="__custom__">⌨  Enter custom model ID…</option>';
+
+  document.querySelectorAll('.galactus-model-sel').forEach(el => {
+    el.innerHTML = opts;
+    el.value = galactusDefaultModel || (galactusModels[0]?.modelId || '');
+  });
+}
+
+// Check Galactus status on boot — hide AgentCore option if not configured
+async function checkGalactusStatus() {
+  try {
+    const s = await fetchJSON('/api/v1/galactus/status');
+    galactusAgentcoreAvailable = s.agentcore_configured;
+    if (!galactusAgentcoreAvailable) {
+      document.querySelectorAll('#galactus-modal-mode option[value="agentcore"]')
+        .forEach(o => o.remove());
+    }
+  } catch(_) { /* silently ignore */ }
+}
+
+function openGalactusModal(agentId = null) {
+  galactusModalAgentId = agentId;
+  galactusModalSession = null;  // fresh session
+  document.getElementById('galactus-modal').classList.add('open');
+
+  const subtitle = document.getElementById('galactus-modal-subtitle');
+  const suggestEl = document.getElementById('galactus-modal-suggestions');
+
+  if (agentId) {
+    const agent = Object.values(latestScans).length
+      ? null  // look it up below
+      : null;
+    // Try to resolve agent name from DOM
+    const row = document.querySelector(`.agent-row button[onclick*="${agentId}"]`);
+    const agentName = row
+      ? row.closest('tr').querySelector('td div[style*="font-weight"]')?.textContent || 'this agent'
+      : 'this agent';
+
+    subtitle.textContent = `Analysing security for: ${agentName}`;
+
+    const scan = latestScans[agentId];
+    const chips = _galactusSuggestions(scan);
+    suggestEl.innerHTML = chips.map(s =>
+      `<div class="suggestion-chip" onclick="useGalactusSuggestion('modal','${esc(s)}')">${esc(s)}</div>`
+    ).join('');
+  } else {
+    subtitle.textContent = 'Ask about agent security risks, scan failures, remediation steps, or fleet posture.';
+    const fleetChips = [
+      'Which agents have the highest risk scores?',
+      'What are the most common OWASP failures across the fleet?',
+      'Which agents had prompt injection failures?',
+      'Summarise the current fleet security posture',
+      'What runtime attack trends do you see in the last 24h?',
+    ];
+    suggestEl.innerHTML = fleetChips.map(s =>
+      `<div class="suggestion-chip" onclick="useGalactusSuggestion('modal','${esc(s)}')">${esc(s)}</div>`
+    ).join('');
+  }
+}
+
+function closeGalactusModal() {
+  document.getElementById('galactus-modal').classList.remove('open');
+  galactusModalAgentId = null;
+}
+
+function _galactusSuggestions(scan) {
+  const chips = [];
+  if (scan) {
+    if ((scan.prompt_injection_score || 0) > 0)
+      chips.push('Why did the prompt injection check fail?');
+    if ((scan.jailbreak_score || 0) > 0)
+      chips.push('How do I fix the jailbreak vulnerability?');
+    if ((scan.system_prompt_leakage_score || 0) > 0)
+      chips.push('How can I prevent system prompt leakage?');
+    if ((scan.excessive_agency_score || 0) > 0)
+      chips.push('How do I limit excessive agency?');
+    if ((scan.pii_leak_score || 0) > 0)
+      chips.push('How do I prevent PII leakage?');
+    if ((scan.mcp_poisoning_score || 0) > 0)
+      chips.push('What is the MCP poisoning risk and how to fix it?');
+    if (!scan.gate_passed)
+      chips.push('What are the highest priority fixes for this agent?');
+  }
+  chips.push('What guardrails should I add for this agent?');
+  chips.push('Is this agent safe to deploy to production?');
+  return chips.slice(0, 5);
+}
+
+function useGalactusSuggestion(context, text) {
+  const inputId = context === 'modal' ? 'galactus-modal-input' : 'galactus-panel-input';
+  const el = document.getElementById(inputId);
+  if (el) {
+    el.value = text;
+    el.focus();
+  }
+}
+
+function _addGalactusMsg(containerId, role, text) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  // Remove loading placeholder if present
+  const loading = container.querySelector('.loading');
+  if (loading) loading.remove();
+  const div = document.createElement('div');
+  div.className = `galactus-msg ${role}`;
+  div.textContent = text;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function _addGalactusLoading(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const div = document.createElement('div');
+  div.className = 'galactus-msg loading';
+  div.textContent = '⬡ Galactus is thinking...';
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+async function submitGalactusQuery(context, forcedAgentId) {
+  const isModal = context === 'modal';
+  const inputId   = isModal ? 'galactus-modal-input'   : 'galactus-panel-input';
+  const msgId     = isModal ? 'galactus-modal-messages' : 'galactus-panel-messages';
+  const btnId     = isModal ? 'galactus-modal-btn'      : 'galactus-panel-btn';
+  const modeId    = isModal ? 'galactus-modal-mode'     : 'galactus-panel-mode';
+  const modelId   = isModal ? 'galactus-modal-model'    : 'galactus-panel-model';
+
+  const inputEl = document.getElementById(inputId);
+  const btnEl   = document.getElementById(btnId);
+  const question = (inputEl?.value || '').trim();
+  if (!question) return;
+
+  const mode     = document.getElementById(modeId)?.value || 'bedrock';
+  const modelSel = _resolveModelId(context);
+  const agentId   = forcedAgentId !== undefined
+                      ? forcedAgentId
+                      : (isModal ? galactusModalAgentId : currentAgentId);
+  const sessionId = isModal ? galactusModalSession : galactusPanelSession;
+
+  // Show user message
+  _addGalactusMsg(msgId, 'user', question);
+  if (inputEl) inputEl.value = '';
+  if (btnEl)   { btnEl.disabled = true; btnEl.textContent = '...'; }
+  _addGalactusLoading(msgId);
+
+  try {
+    const result = await postJSON('/api/v1/galactus/query', {
+      question,
+      agent_id: agentId || null,
+      mode,
+      model_id: mode === 'agentcore' ? null : (modelSel || null),
+      session_id: sessionId,
+    });
+
+    // Persist session for multi-turn AgentCore
+    if (isModal) galactusModalSession = result.session_id;
+    else         galactusPanelSession = result.session_id;
+
+    // Show model attribution below the answer
+    const modelLabel = result.model_id
+      ? result.model_id.split('.').pop().replace(/-v\d+:\d+$/, '')  // e.g. "claude-3-7-sonnet-20250219"
+      : (result.mode === 'agentcore' ? 'AgentCore' : '');
+    const annotated = result.answer + (modelLabel ? `\n\n— ${modelLabel}` : '');
+    _addGalactusMsg(msgId, 'ai', annotated);
+  } catch (err) {
+    const raw = err.message || '';
+    let errMsg = raw;
+    try { errMsg = JSON.parse(raw).detail || raw; } catch(_) {}
+    _addGalactusMsg(msgId, 'ai', `⚠ ${errMsg}`);
+  } finally {
+    if (btnEl) { btnEl.disabled = false; btnEl.textContent = 'Ask'; }
+  }
+}
+
+function onGalactusModeChange(context, mode) {
+  // Show/hide model picker — only relevant for bedrock mode
+  const wrapId = context === 'modal' ? 'galactus-modal-model-wrap' : 'galactus-panel-model-wrap';
+  const wrap = document.getElementById(wrapId);
+  if (wrap) wrap.style.display = mode === 'agentcore' ? 'none' : 'flex';
+}
+
+function onGalactusModelChange(context, value) {
+  // Show/hide the custom model text input
+  const inputId = context === 'modal' ? 'galactus-modal-custom-model' : 'galactus-panel-custom-model';
+  const el = document.getElementById(inputId);
+  if (el) {
+    el.style.display = value === '__custom__' ? 'block' : 'none';
+    if (value === '__custom__') { el.focus(); }
+  }
+}
+
+function _resolveModelId(context) {
+  const selId    = context === 'modal' ? 'galactus-modal-model'        : 'galactus-panel-model';
+  const customId = context === 'modal' ? 'galactus-modal-custom-model' : 'galactus-panel-custom-model';
+  const selVal = document.getElementById(selId)?.value || '';
+  if (selVal === '__custom__') {
+    return (document.getElementById(customId)?.value || '').trim() || null;
+  }
+  return selVal || null;
+}
+
+// Initialise Galactus tab content inside the agent detail panel
+function initGalactusTab(agent) {
+  galactusPanelSession = null;  // fresh session when panel opens
+  const scan = latestScans[agent.id];
+  const chips = _galactusSuggestions(scan);
+
+  // Build current model options — dynamic list if loaded, fallback to default
+  const modelOpts = galactusModels.length
+    ? galactusModels.map(m => {
+        const sel = m.modelId === galactusDefaultModel ? ' selected' : '';
+        return `<option value="${esc(m.modelId)}"${sel}>${esc(m.modelName)}</option>`;
+      }).join('')
+    : `<option value="${esc(galactusDefaultModel || 'anthropic.claude-3-7-sonnet-20250219-v1:0')}">${esc(galactusDefaultModel || 'Claude 3.7 Sonnet — latest')}</option>`;
+
+  const modeOptions = `
+    <option value="bedrock">Bedrock</option>
+    ${galactusAgentcoreAvailable ? '<option value="agentcore">AgentCore</option>' : ''}
+  `;
+
+  document.getElementById('tab-galactus').innerHTML = `
+    <div class="galactus-controls">
+      <span style="font-size:11px;font-weight:700;color:var(--purple)">⬡ Galactus</span>
+      <span style="font-size:10px;color:var(--subtle)">AI Security Intel</span>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <label style="font-size:10px;color:var(--muted)">Mode:</label>
+        <select id="galactus-panel-mode" onchange="onGalactusModeChange('panel',this.value)"
+                style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 7px;color:var(--text);font-size:11px;width:auto">
+          <option value="bedrock">Bedrock</option>
+          ${galactusAgentcoreAvailable ? '<option value="agentcore">AgentCore</option>' : ''}
+        </select>
+        <div id="galactus-panel-model-wrap" style="display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;align-items:center;gap:4px">
+            <label style="font-size:10px;color:var(--muted)">Model:</label>
+            <select id="galactus-panel-model" class="galactus-model-sel"
+                    style="background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:3px 7px;color:var(--text);font-size:11px;max-width:180px"
+                    onchange="onGalactusModelChange('panel',this.value)">
+              ${modelOpts}
+            </select>
+          </div>
+          <input id="galactus-panel-custom-model" type="text" placeholder="Custom model ID…"
+                 style="display:none;font-size:11px;padding:3px 7px;background:var(--surface2);border:1px solid var(--purple);border-radius:5px;color:var(--text)"/>
+        </div>
+      </div>
+    </div>
+    ${chips.length ? `
+    <div style="font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px">Quick questions</div>
+    <div class="galactus-suggestions">
+      ${chips.map(s => `<div class="suggestion-chip" onclick="useGalactusSuggestion('panel','${esc(s)}')">${esc(s)}</div>`).join('')}
+    </div>` : ''}
+    <div class="galactus-chat" style="height:320px">
+      <div class="galactus-messages" id="galactus-panel-messages" style="height:240px">
+        <div class="galactus-msg ai">Ask me anything about <strong>${esc(agent.name)}</strong> — failed checks, what they mean, or how to fix them.</div>
+      </div>
+      <div class="galactus-input-row">
+        <textarea id="galactus-panel-input" placeholder="e.g. Why did the prompt injection check fail?" onkeydown="if(event.ctrlKey&&event.key==='Enter')submitGalactusQuery('panel')"></textarea>
+        <button class="btn-primary galactus-send" id="galactus-panel-btn" onclick="submitGalactusQuery('panel')">Ask</button>
+      </div>
+      <div style="font-size:10px;color:var(--subtle);padding-top:3px">Ctrl+Enter to send</div>
+    </div>
+  `;
+}
+
+// Allow clicking outside galactus modal to close
+document.getElementById('galactus-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeGalactusModal();
+});
+
+// ── Auth ──────────────────────────────────────────────
+async function doLogout() {
+  await fetch('/auth/logout', { method: 'POST', credentials: 'same-origin' });
+  window.location.href = '/login';
+}
+
+// ── Boot ──────────────────────────────────────────────
+// Chain insight load after refresh() so fleet context is ready when Galactus runs
+refresh().then(() => loadGalactusInsight());
+checkGalactusStatus();
+loadGalactusModels();
+setInterval(refresh, 15000);
+</script>
+</body>
+</html>

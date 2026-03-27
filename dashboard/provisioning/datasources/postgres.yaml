@@ -1,0 +1,16 @@
+apiVersion: 1
+datasources:
+  - name: Watchtower-DB
+    type: postgres
+    uid: watchtower-pg
+    url: postgres:5432
+    database: watchtower
+    user: watchtower
+    secureJsonData:
+      password: watchtower
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1600
+      timescaledb: false
+    isDefault: true
+    editable: true

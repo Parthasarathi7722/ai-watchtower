@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI Watchtower — Settings</title>
+<style>
+  :root{
+    --bg:#0f1117;--surface:#1a1f2e;--surface2:#1e293b;
+    --border:#2d3748;--text:#e2e8f0;--muted:#94a3b8;--subtle:#475569;
+    --blue:#3b82f6;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;
+    --purple:#8b5cf6;--cyan:#06b6d4;--orange:#f97316;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;min-height:100vh}
+
+  /* Header */
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+  .logo{font-size:18px;font-weight:700;letter-spacing:.5px}
+  .logo span{color:var(--red)}
+  .header-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* Layout */
+  .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 57px)}
+
+  /* Sidebar */
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);padding:20px 0}
+  .nav-section{padding:0 12px;margin-bottom:20px}
+  .nav-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--subtle);padding:0 10px;margin-bottom:6px}
+  .nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:7px;cursor:pointer;color:var(--muted);font-size:13px;font-weight:500;transition:background .15s,color .15s;user-select:none}
+  .nav-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
+  .nav-item.active{background:rgba(59,130,246,.1);color:var(--blue)}
+  .nav-item .icon{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+
+  /* Content */
+  .content{padding:28px 32px;max-width:860px}
+  .page-title{font-size:20px;font-weight:700;margin-bottom:4px}
+  .page-sub{font-size:13px;color:var(--muted);margin-bottom:28px}
+
+  /* Cards */
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+  .card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .card-title{font-weight:600;font-size:13px}
+  .card-body{padding:18px}
+
+  /* Info rows */
+  .info-row{display:flex;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--border);gap:16px}
+  .info-row:last-child{border-bottom:none}
+  .info-key{font-size:12px;color:var(--muted);width:200px;flex-shrink:0;font-weight:600;padding-top:1px}
+  .info-val{font-size:12px;word-break:break-all;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+  /* Badges */
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+  .badge-green{background:rgba(16,185,129,.15);color:#34d399}
+  .badge-red{background:rgba(239,68,68,.15);color:#f87171}
+  .badge-yellow{background:rgba(245,158,11,.15);color:#fbbf24}
+  .badge-blue{background:rgba(59,130,246,.15);color:#60a5fa}
+  .badge-purple{background:rgba(139,92,246,.15);color:#a78bfa}
+  .badge-gray{background:rgba(100,116,139,.2);color:var(--muted)}
+  .badge-orange{background:rgba(249,115,22,.15);color:#fb923c}
+
+  /* Buttons */
+  button{cursor:pointer;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;transition:opacity .15s}
+  button:hover{opacity:.8}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-ghost{background:var(--surface2);color:var(--muted)}
+  .btn-danger{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+  .btn-sm{padding:4px 10px;font-size:11px}
+  .btn-green{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.2)}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse}
+  th{padding:9px 12px;text-align:left;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border-bottom:1px solid var(--border)}
+  td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:12px}
+  tr:last-child td{border-bottom:none}
+
+  /* Form */
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .form-group{display:flex;flex-direction:column;gap:5px}
+  .form-group.full{grid-column:1/-1}
+  label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  input,select{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--text);font-size:13px;width:100%}
+  input:focus,select:focus{outline:none;border-color:var(--blue)}
+  input::placeholder{color:var(--subtle)}
+  .form-actions{display:flex;gap:8px;justify-content:flex-end;padding-top:6px}
+  .form-hint{font-size:11px;color:var(--subtle);margin-top:2px}
+  .form-err{font-size:11px;color:#f87171;margin-top:4px;display:none}
+  .form-err.visible{display:block}
+
+  /* Threshold grid */
+  .threshold-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .threshold-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px}
+  .threshold-name{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:6px}
+  .threshold-val{font-size:24px;font-weight:700;margin-bottom:4px}
+  .threshold-desc{font-size:11px;color:var(--subtle);line-height:1.5}
+  .threshold-zero{color:var(--red)}
+  .threshold-low{color:var(--yellow)}
+  .threshold-high{color:var(--green)}
+
+  /* Auth mode steps */
+  .setup-step{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+  .setup-step:last-child{border-bottom:none}
+  .step-num{width:22px;height:22px;border-radius:50%;background:rgba(59,130,246,.15);color:var(--blue);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+  .step-body{flex:1}
+  .step-title{font-size:12px;font-weight:600;margin-bottom:3px}
+  .step-detail{font-size:11px;color:var(--muted);line-height:1.6}
+  code{background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:3px;padding:1px 5px;font-family:'Courier New',monospace;font-size:11px;color:#93c5fd}
+  pre.code-block{background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-family:'Courier New',monospace;font-size:11px;color:#93c5fd;line-height:1.6;overflow-x:auto;margin:6px 0;white-space:pre}
+
+  /* SSO coming soon */
+  .sso-card{border:1px dashed rgba(139,92,246,.3);background:rgba(139,92,246,.04);border-radius:8px;padding:14px 16px;margin-bottom:10px}
+  .sso-title{font-size:12px;font-weight:600;color:var(--purple);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+  .sso-desc{font-size:11px;color:var(--muted);line-height:1.6}
+
+  /* Toast */
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 16px;font-size:13px;z-index:400;animation:slideUp .3s ease;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+  @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .toast-success{border-left:3px solid var(--green)}
+  .toast-error{border-left:3px solid var(--red)}
+
+  /* Spinner */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{display:inline-block;width:11px;height:11px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle}
+
+  .empty{padding:24px;text-align:center;color:var(--subtle);font-size:13px}
+
+  /* Section divider */
+  .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:12px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="dot"></div>
+  <div class="logo">AI <span>Watchtower</span></div>
+  <span style="color:var(--subtle);font-size:13px;font-weight:500">/ Settings</span>
+  <div class="header-right">
+    <a href="/" style="text-decoration:none"><button class="btn-ghost btn-sm">← Dashboard</button></a>
+    <button class="btn-ghost btn-sm" onclick="doLogout()" style="color:var(--subtle)">⎋ Sign out</button>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Platform</div>
+      <div class="nav-item active" onclick="showTab('platform')" id="nav-platform">
+        <span class="icon">◈</span> Overview
+      </div>
+      <div class="nav-item" onclick="showTab('users')" id="nav-users">
+        <span class="icon">👤</span> Users
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Security</div>
+      <div class="nav-item" onclick="showTab('auth')" id="nav-auth">
+        <span class="icon">🔐</span> Authentication
+      </div>
+      <div class="nav-item" onclick="showTab('thresholds')" id="nav-thresholds">
+        <span class="icon">⚖</span> Gate Thresholds
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Integrations</div>
+      <div class="nav-item" onclick="showTab('galactus')" id="nav-galactus">
+        <span class="icon" style="color:var(--purple)">⬡</span> Galactus AI
+      </div>
+    </div>
+  </aside>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- ── Platform Overview ───────────────────────── -->
+    <div id="tab-platform">
+      <div class="page-title">Platform Overview</div>
+      <p class="page-sub">Current configuration and runtime status</p>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Runtime</span></div>
+        <div class="card-body" id="platform-runtime">
+          <div class="empty"><span class="spinner"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">AWS / Bedrock</span></div>
+        <div class="card-body" id="platform-aws">
+          <div class="empty"><span class="spinner"></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Users ──────────────────────────────────── -->
+    <div id="tab-users" style="display:none">
+      <div class="page-title">User Management</div>
+      <p class="page-sub">Manage who can access the platform</p>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Users</span>
+          <button class="btn-primary btn-sm" onclick="toggleAddUser()">+ Add User</button>
+        </div>
+
+        <!-- Add user form (hidden by default) -->
+        <div id="add-user-form" style="display:none;padding:16px 18px;border-bottom:1px solid var(--border);background:rgba(59,130,246,.03)">
+          <div class="section-title">New User</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Username</label>
+              <input id="new-username" placeholder="analyst" autocomplete="off"/>
+            </div>
+            <div class="form-group">
+              <label>Role</label>
+              <select id="new-role">
+                <option value="admin">Admin — full access</option>
+                <option value="analyst">Analyst — read-only (future)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Password</label>
+              <input id="new-password" type="password" placeholder="min 8 characters" autocomplete="new-password"/>
+            </div>
+            <div class="form-group">
+              <label>Confirm Password</label>
+              <input id="new-password2" type="password" placeholder="repeat password" autocomplete="new-password"/>
+            </div>
+          </div>
+          <div class="form-err" id="add-user-err"></div>
+          <div class="form-actions">
+            <button class="btn-ghost btn-sm" onclick="toggleAddUser()">Cancel</button>
+            <button class="btn-primary btn-sm" onclick="submitAddUser()">Create User</button>
+          </div>
+        </div>
+
+        <div id="users-table-wrap">
+          <div class="empty"><span class="spinner"></span></div>
+        </div>
+      </div>
+
+      <!-- Change password inline -->
+      <div class="card" id="change-pw-card" style="display:none">
+        <div class="card-header">
+          <span class="card-title">Change Password — <span id="change-pw-username"></span></span>
+          <button class="btn-ghost btn-sm" onclick="closeChangePw()">✕</button>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>New Password</label>
+              <input id="cp-password" type="password" placeholder="min 8 characters" autocomplete="new-password"/>
+            </div>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <input id="cp-password2" type="password" placeholder="repeat password" autocomplete="new-password"/>
+            </div>
+          </div>
+          <div class="form-err" id="change-pw-err"></div>
+          <div class="form-actions">
+            <button class="btn-ghost btn-sm" onclick="closeChangePw()">Cancel</button>
+            <button class="btn-primary btn-sm" onclick="submitChangePw()">Update Password</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Authentication ─────────────────────────── -->
+    <div id="tab-auth" style="display:none">
+      <div class="page-title">Authentication</div>
+      <p class="page-sub">Configure how users are authenticated</p>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Current Mode</span></div>
+        <div class="card-body" id="auth-current">
+          <div class="empty"><span class="spinner"></span></div>
+        </div>
+      </div>
+
+      <!-- Local mode setup -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Local Auth</span>
+          <span class="badge badge-green">Active by default</span>
+        </div>
+        <div class="card-body">
+          <div class="setup-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Set credentials in <code>.env</code></div>
+              <div class="step-detail">
+                <code>AUTH_MODE=local</code><br>
+                <code>ADMIN_USERNAME=admin</code><br>
+                <code>ADMIN_PASSWORD_HASH=&lt;bcrypt-hash&gt;</code>
+              </div>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Generate a bcrypt hash</div>
+              <pre class="code-block">python3 -c "import bcrypt; print(bcrypt.hashpw(b'your-password', bcrypt.gensalt()).decode())"</pre>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Manage additional users via this Settings page</div>
+              <div class="step-detail">Once deployed, use the Users tab to add teammates — no restart needed.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secrets Manager setup -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">AWS Secrets Manager</span>
+          <span class="badge badge-blue">Production recommended</span>
+        </div>
+        <div class="card-body">
+          <div class="setup-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Create a secret in AWS Secrets Manager</div>
+              <pre class="code-block">aws secretsmanager create-secret \
+  --name "ai-watchtower/credentials" \
+  --secret-string '{"admin": "$2b$12$YOUR_HASH"}'</pre>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">IAM permission required</div>
+              <pre class="code-block">{
+  "Effect": "Allow",
+  "Action": ["secretsmanager:GetSecretValue"],
+  "Resource": "arn:aws:secretsmanager:*:*:secret:ai-watchtower/*"
+}</pre>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Set in <code>.env</code> and restart</div>
+              <div class="step-detail">
+                <code>AUTH_MODE=secrets_manager</code><br>
+                <code>AUTH_SECRET_NAME=ai-watchtower/credentials</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SSO — Coming Soon -->
+      <div class="sso-card">
+        <div class="sso-title"><span>⬡</span> SSO — Okta / AWS Cognito (coming soon)</div>
+        <div class="sso-desc">
+          Set <code>AUTH_MODE=okta</code> or <code>AUTH_MODE=cognito</code> to enable SAML / OIDC federation.
+          The platform will redirect unauthenticated users to your IdP login page.
+          Configure by setting <code>SSO_CLIENT_ID</code>, <code>SSO_CLIENT_SECRET</code>, and <code>SSO_DOMAIN</code> in <code>.env</code>.
+          <br><br>The <strong>Users</strong> tab will show SSO-synced users once provisioning is configured.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Gate Thresholds ────────────────────────── -->
+    <div id="tab-thresholds" style="display:none">
+      <div class="page-title">Gate Thresholds</div>
+      <p class="page-sub">Maximum % of adversarial probes an agent may fail per category before being blocked. Configure via environment variables and restart.</p>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Zero-tolerance categories</span>
+          <span class="badge badge-red">Block on any failure</span>
+        </div>
+        <div class="card-body">
+          <div class="threshold-grid" id="thresholds-zero">
+            <div class="empty"><span class="spinner"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Permissive categories</span>
+          <span class="badge badge-yellow">Configurable tolerance</span>
+        </div>
+        <div class="card-body">
+          <div class="threshold-grid" id="thresholds-permissive">
+            <div class="empty"><span class="spinner"></span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="border-color:rgba(59,130,246,.2);background:rgba(59,130,246,.03)">
+        <div class="card-body" style="font-size:12px;color:var(--muted);line-height:1.7">
+          <strong style="color:var(--text)">To change thresholds:</strong> update the corresponding env var in <code>.env</code> (or <code>docker-compose.yml</code>) and restart the API and worker containers.<br>
+          Example: <code>PROMPT_INJECTION_THRESHOLD=0</code>, <code>PII_LEAK_THRESHOLD=5</code>, <code>CONTENT_VIOLATION_THRESHOLD=10</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Galactus AI ─────────────────────────────── -->
+    <div id="tab-galactus" style="display:none">
+      <div class="page-title">Galactus AI Configuration</div>
+      <p class="page-sub">AI-powered security intelligence — AWS Bedrock or Bedrock AgentCore</p>
+
+      <div class="card">
+        <div class="card-header"><span class="card-title">Current Status</span></div>
+        <div class="card-body" id="galactus-status-body">
+          <div class="empty"><span class="spinner"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Bedrock Direct (Converse API)</span>
+          <span class="badge badge-green">Works out of the box</span>
+        </div>
+        <div class="card-body">
+          <div class="setup-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">IAM permission required</div>
+              <pre class="code-block">{
+  "Effect": "Allow",
+  "Action": ["bedrock:InvokeModel", "bedrock:Converse",
+             "bedrock:ListFoundationModels"],
+  "Resource": "*"
+}</pre>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Enable cross-region inference (for <code>us.*</code> model IDs)</div>
+              <div class="step-detail">AWS Console → Amazon Bedrock → Model Access → Enable cross-region inference profiles. Or use <code>anthropic.claude-3-5-sonnet-20241022-v2:0</code> for on-demand only accounts.</div>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Set model in <code>.env</code></div>
+              <div class="step-detail"><code>GALACTUS_MODE=bedrock</code><br><code>GALACTUS_MODEL_ID=us.anthropic.claude-sonnet-4-6</code></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Bedrock AgentCore</span>
+          <span class="badge badge-purple">Persistent memory + tools</span>
+        </div>
+        <div class="card-body">
+          <div class="setup-step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Create an Agent in AWS Console</div>
+              <div class="step-detail">AWS Console → Amazon Bedrock → Agents → Create Agent. Set the system prompt to the Galactus security expert persona. Attach Action Groups for scan triggers and Knowledge Base for OWASP docs.</div>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">IAM permission for AgentCore</div>
+              <pre class="code-block">{
+  "Effect": "Allow",
+  "Action": "bedrock-agent-runtime:InvokeAgent",
+  "Resource": "arn:aws:bedrock:*:*:agent-alias/AGENT_ID/ALIAS_ID"
+}</pre>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Set in <code>.env</code></div>
+              <div class="step-detail">
+                <code>GALACTUS_MODE=agentcore</code><br>
+                <code>GALACTUS_AGENT_ID=&lt;agent-id&gt;</code><br>
+                <code>GALACTUS_AGENT_ALIAS_ID=&lt;alias-id&gt;</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<script>
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+async function fetchJSON(url) {
+  const r = await fetch(url, { credentials: 'same-origin' });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+async function postJSON(url, body) {
+  const r = await fetch(url, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), credentials:'same-origin' });
+  if (!r.ok) throw new Error((await r.json().catch(()=>({}))).detail || r.statusText);
+  return r.json();
+}
+async function putJSON(url, body) {
+  const r = await fetch(url, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body), credentials:'same-origin' });
+  if (!r.ok) throw new Error((await r.json().catch(()=>({}))).detail || r.statusText);
+  return r.json();
+}
+async function deleteReq(url) {
+  const r = await fetch(url, { method:'DELETE', credentials:'same-origin' });
+  if (!r.ok) throw new Error((await r.json().catch(()=>({}))).detail || r.statusText);
+}
+
+function toast(msg, type='success') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+// ── Tab navigation ──────────────────────────────────
+function showTab(name) {
+  ['platform','users','auth','thresholds','galactus'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === name ? '' : 'none';
+    document.getElementById(`nav-${t}`).classList.toggle('active', t === name);
+  });
+  if (name === 'platform')   loadPlatform();
+  if (name === 'users')      loadUsers();
+  if (name === 'auth')       loadAuthStatus();
+  if (name === 'thresholds') loadThresholds();
+  if (name === 'galactus')   loadGalactusStatus();
+}
+
+// ── Platform overview ───────────────────────────────
+async function loadPlatform() {
+  try {
+    const d = await fetchJSON('/api/v1/settings/platform');
+    document.getElementById('platform-runtime').innerHTML = `
+      <div class="info-row"><span class="info-key">Environment</span><span class="info-val"><span class="badge ${d.app_env==='production'?'badge-red':'badge-yellow'}">${esc(d.app_env)}</span></span></div>
+      <div class="info-row"><span class="info-key">Version</span><span class="info-val">${esc(d.version)}</span></div>
+      <div class="info-row"><span class="info-key">Scan mode</span><span class="info-val">${d.mock_scan ? '<span class="badge badge-yellow">MOCK — local probes</span>' : '<span class="badge badge-green">LIVE — full Promptfoo</span>'}</span></div>
+      <div class="info-row"><span class="info-key">Auth mode</span><span class="info-val"><span class="badge badge-blue">${esc(d.auth_mode)}</span></span></div>
+      <div class="info-row"><span class="info-key">Session duration</span><span class="info-val">${esc(d.jwt_expire_minutes)} minutes</span></div>
+    `;
+    document.getElementById('platform-aws').innerHTML = `
+      <div class="info-row"><span class="info-key">Region</span><span class="info-val">${esc(d.aws_region)}</span></div>
+      <div class="info-row"><span class="info-key">Credentials</span><span class="info-val"><span class="badge ${d.aws_credentials==='explicit'?'badge-green':'badge-gray'}">${esc(d.aws_credentials)}</span></span></div>
+      <div class="info-row"><span class="info-key">Galactus mode</span><span class="info-val"><span class="badge badge-purple">${esc(d.galactus_mode)}</span></span></div>
+      <div class="info-row"><span class="info-key">Galactus model</span><span class="info-val" style="font-family:monospace;font-size:11px">${esc(d.galactus_model)}</span></div>
+      <div class="info-row"><span class="info-key">AgentCore</span><span class="info-val">${d.agentcore_configured ? '<span class="badge badge-green">Configured</span>' : '<span class="badge badge-gray">Not configured</span>'}</span></div>
+    `;
+  } catch(e) {
+    document.getElementById('platform-runtime').innerHTML = `<div class="empty" style="color:var(--red)">${esc(e.message)}</div>`;
+  }
+}
+
+// ── Users ───────────────────────────────────────────
+let changePwTarget = null;
+
+async function loadUsers() {
+  const wrap = document.getElementById('users-table-wrap');
+  try {
+    const users = await fetchJSON('/api/v1/settings/users');
+    if (!users.length) {
+      wrap.innerHTML = '<div class="empty">No users found</div>';
+      return;
+    }
+    wrap.innerHTML = `<table>
+      <thead><tr>
+        <th>Username</th><th>Role</th><th>Status</th><th>Created</th><th>Last Login</th><th></th>
+      </tr></thead>
+      <tbody>
+        ${users.map(u => `<tr>
+          <td style="font-weight:600">${esc(u.username)}</td>
+          <td><span class="badge ${u.role==='admin'?'badge-blue':'badge-gray'}">${esc(u.role)}</span></td>
+          <td><span class="badge ${u.is_active?'badge-green':'badge-red'}">${u.is_active?'active':'inactive'}</span></td>
+          <td style="color:var(--muted)">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+          <td style="color:var(--muted)">${u.last_login ? relTime(u.last_login) : 'Never'}</td>
+          <td style="white-space:nowrap;display:flex;gap:6px">
+            <button class="btn-ghost btn-sm" onclick="openChangePw('${esc(u.username)}')">Change PW</button>
+            <button class="btn-danger btn-sm" onclick="deleteUser('${esc(u.username)}')">Delete</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  } catch(e) {
+    wrap.innerHTML = `<div class="empty" style="color:var(--red)">${esc(e.message)}</div>`;
+  }
+}
+
+function relTime(iso) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff/60000);
+  if (m < 1)  return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m/60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h/24)}d ago`;
+}
+
+function toggleAddUser() {
+  const f = document.getElementById('add-user-form');
+  f.style.display = f.style.display === 'none' ? '' : 'none';
+  document.getElementById('add-user-err').classList.remove('visible');
+  ['new-username','new-password','new-password2'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function submitAddUser() {
+  const username = document.getElementById('new-username').value.trim();
+  const role     = document.getElementById('new-role').value;
+  const password = document.getElementById('new-password').value;
+  const pw2      = document.getElementById('new-password2').value;
+  const errEl    = document.getElementById('add-user-err');
+
+  errEl.classList.remove('visible');
+  if (!username) { errEl.textContent = 'Username is required'; errEl.classList.add('visible'); return; }
+  if (password.length < 8) { errEl.textContent = 'Password must be at least 8 characters'; errEl.classList.add('visible'); return; }
+  if (password !== pw2)    { errEl.textContent = 'Passwords do not match'; errEl.classList.add('visible'); return; }
+
+  try {
+    await postJSON('/api/v1/settings/users', { username, password, role });
+    toggleAddUser();
+    toast(`User '${username}' created`);
+    loadUsers();
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.classList.add('visible');
+  }
+}
+
+function openChangePw(username) {
+  changePwTarget = username;
+  document.getElementById('change-pw-username').textContent = username;
+  document.getElementById('change-pw-card').style.display = '';
+  document.getElementById('change-pw-err').classList.remove('visible');
+  document.getElementById('cp-password').value = '';
+  document.getElementById('cp-password2').value = '';
+  document.getElementById('cp-password').focus();
+}
+function closeChangePw() {
+  document.getElementById('change-pw-card').style.display = 'none';
+  changePwTarget = null;
+}
+async function submitChangePw() {
+  const pw  = document.getElementById('cp-password').value;
+  const pw2 = document.getElementById('cp-password2').value;
+  const errEl = document.getElementById('change-pw-err');
+  errEl.classList.remove('visible');
+  if (pw.length < 8) { errEl.textContent = 'Password must be at least 8 characters'; errEl.classList.add('visible'); return; }
+  if (pw !== pw2)    { errEl.textContent = 'Passwords do not match'; errEl.classList.add('visible'); return; }
+  try {
+    await putJSON(`/api/v1/settings/users/${encodeURIComponent(changePwTarget)}/password`, { new_password: pw });
+    closeChangePw();
+    toast('Password updated');
+  } catch(e) {
+    errEl.textContent = e.message;
+    errEl.classList.add('visible');
+  }
+}
+
+async function deleteUser(username) {
+  if (!confirm(`Deactivate user '${username}'? They will no longer be able to log in.`)) return;
+  try {
+    await deleteReq(`/api/v1/settings/users/${encodeURIComponent(username)}`);
+    toast(`User '${username}' deactivated`);
+    loadUsers();
+  } catch(e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ── Auth status ─────────────────────────────────────
+async function loadAuthStatus() {
+  try {
+    const s = await fetchJSON('/auth/status');
+    const modeLabel = {
+      local: 'Local (env vars)',
+      secrets_manager: 'AWS Secrets Manager',
+      cognito: 'AWS Cognito',
+      okta: 'Okta',
+    }[s.auth_mode] || s.auth_mode;
+    const modeClass = s.auth_mode === 'secrets_manager' ? 'badge-green'
+                    : s.auth_mode === 'local' ? 'badge-yellow'
+                    : 'badge-purple';
+    document.getElementById('auth-current').innerHTML = `
+      <div class="info-row"><span class="info-key">Mode</span><span class="info-val"><span class="badge ${modeClass}">${esc(modeLabel)}</span></span></div>
+      ${s.secret_name ? `<div class="info-row"><span class="info-key">Secret name</span><span class="info-val" style="font-family:monospace;font-size:11px">${esc(s.secret_name)}</span></div>` : ''}
+      <div class="info-row"><span class="info-key">SSO</span><span class="info-val">${s.sso_available ? `<span class="badge badge-purple">${esc(s.sso_provider)}</span>` : '<span class="badge badge-gray">Not configured</span>'}</span></div>
+      <div class="info-row"><span class="info-key">User store</span><span class="info-val"><span class="badge badge-blue">PostgreSQL</span> <span style="font-size:11px;color:var(--muted)">managed via Users tab</span></span></div>
+    `;
+  } catch(e) {
+    document.getElementById('auth-current').innerHTML = `<div class="empty" style="color:var(--red)">${esc(e.message)}</div>`;
+  }
+}
+
+// ── Thresholds ──────────────────────────────────────
+const THRESHOLD_LABELS = {
+  prompt_injection:      { label: 'Prompt Injection',      owasp: 'LLM01', desc: 'Adversarial instruction override' },
+  jailbreak:             { label: 'Jailbreak',              owasp: 'LLM01', desc: 'Safety guardrail bypass' },
+  system_prompt_leakage: { label: 'System Prompt Leakage',  owasp: 'LLM07', desc: 'System prompt exfiltration' },
+  excessive_agency:      { label: 'Excessive Agency',       owasp: 'LLM06', desc: 'Unblocked dangerous actions' },
+  mcp_poisoning:         { label: 'MCP Tool Poisoning',     owasp: 'LLM08', desc: 'Poisoned tool descriptions' },
+  pii_leak:              { label: 'PII Leakage',            owasp: 'LLM02', desc: 'Personal data exposure' },
+  insecure_output:       { label: 'Insecure Output',        owasp: 'LLM05', desc: 'XSS / injection in output' },
+  content_violation:     { label: 'Content Violation',      owasp: 'LLM05', desc: 'Harmful content generation' },
+  misinformation:        { label: 'Misinformation',         owasp: 'LLM09', desc: 'Confident false statements' },
+};
+
+async function loadThresholds() {
+  try {
+    const data = await fetchJSON('/api/v1/settings/thresholds');
+    const zero = [], permissive = [];
+    for (const [key, th] of Object.entries(data)) {
+      const info = THRESHOLD_LABELS[key] || { label: key, owasp: '', desc: '' };
+      const colorClass = th.value === 0 ? 'threshold-zero' : th.value <= 5 ? 'threshold-low' : 'threshold-high';
+      const card = `<div class="threshold-card">
+        <div class="threshold-name">${esc(info.label)}</div>
+        <div class="threshold-val ${colorClass}">${th.value}%</div>
+        <div class="threshold-desc">
+          ${info.owasp ? `<span class="badge badge-gray" style="font-size:10px;margin-bottom:4px;display:inline-block">${esc(info.owasp)}</span><br>` : ''}
+          ${esc(info.desc)}
+        </div>
+      </div>`;
+      if (th.tolerance === 'zero') zero.push(card);
+      else permissive.push(card);
+    }
+    document.getElementById('thresholds-zero').innerHTML = zero.join('') || '<div class="empty">None</div>';
+    document.getElementById('thresholds-permissive').innerHTML = permissive.join('') || '<div class="empty">None</div>';
+  } catch(e) {
+    document.getElementById('thresholds-zero').innerHTML = `<div class="empty" style="color:var(--red)">${esc(e.message)}</div>`;
+  }
+}
+
+// ── Galactus status ─────────────────────────────────
+async function loadGalactusStatus() {
+  try {
+    const s = await fetchJSON('/api/v1/galactus/status');
+    document.getElementById('galactus-status-body').innerHTML = `
+      <div class="info-row"><span class="info-key">Status</span><span class="info-val"><span class="badge badge-green">Enabled</span></span></div>
+      <div class="info-row"><span class="info-key">Mode</span><span class="info-val"><span class="badge badge-purple">${esc(s.mode)}</span></span></div>
+      <div class="info-row"><span class="info-key">Default model</span><span class="info-val" style="font-family:monospace;font-size:11px">${esc(s.model_id)}</span></div>
+      <div class="info-row"><span class="info-key">AgentCore</span><span class="info-val">${s.agentcore_configured ? '<span class="badge badge-green">Configured</span>' : '<span class="badge badge-gray">Not configured — using Bedrock direct</span>'}</span></div>
+      <div class="info-row"><span class="info-key">AWS credentials</span><span class="info-val"><span class="badge badge-gray">${esc(s.aws_credentials)}</span></span></div>
+      <div class="info-row"><span class="info-key">Region</span><span class="info-val">${esc(s.aws_region)}</span></div>
+    `;
+  } catch(e) {
+    document.getElementById('galactus-status-body').innerHTML = `<div class="empty" style="color:var(--red)">${esc(e.message)}</div>`;
+  }
+}
+
+// ── Auth ─────────────────────────────────────────────
+async function doLogout() {
+  await fetch('/auth/logout', { method:'POST', credentials:'same-origin' });
+  window.location.href = '/login';
+}
+
+// ── Boot ─────────────────────────────────────────────
+loadPlatform();
+</script>
+</body>
+</html>

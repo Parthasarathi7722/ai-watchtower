@@ -1,0 +1,76 @@
+# ── Environment & Secrets ─────────────────────────────────────────────────────
+.env
+*.env.local
+*.env.*.local
+!.env.example
+
+# ── Claude Code ───────────────────────────────────────────────────────────────
+.claude/
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.Python
+venv/
+env/
+.venv/
+.env/
+pip-wheel-metadata/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+*.cover
+
+# ── Node.js ───────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+dist/
+build/
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# ── Shell Scripts (local ops / patching / deploy — not needed in repo) ────────
+*.sh
+
+# ── Logs & Temp ───────────────────────────────────────────────────────────────
+*.log
+logs/
+tmp/
+temp/
+
+# ── AWS / Local session artifacts ─────────────────────────────────────────────
+watchtower-deploy.env
+.aws-session
+
+# ── Keys & Certs ─────────────────────────────────────────────────────────────
+*.pem
+*.key
+*.crt
+*.p12
+
+# ── Promptfoo Cache ───────────────────────────────────────────────────────────
+.promptfoo/
+promptfoo-cache/
+
+# ── Docker ───────────────────────────────────────────────────────────────────
+.docker/

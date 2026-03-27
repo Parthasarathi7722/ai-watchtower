@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: watchtower-config
+  namespace: ai-watchtower
+data:
+  APP_ENV: "production"
+  AWS_REGION: "us-east-1"
+  DATABASE_URL: "postgresql://watchtower:$(POSTGRES_PASSWORD)@postgres-svc:5432/watchtower"
+  REDIS_URL: "redis://redis-svc:6379/0"
+  CELERY_BROKER_URL: "redis://redis-svc:6379/0"
+  CELERY_RESULT_BACKEND: "redis://redis-svc:6379/1"
+  SCANNER_SERVICE_URL: "http://scanner-svc:3001"
+  PROMPT_INJECTION_THRESHOLD: "0"
+  JAILBREAK_THRESHOLD: "0"
+  PII_LEAK_THRESHOLD: "5"
+  CONTENT_VIOLATION_THRESHOLD: "10"

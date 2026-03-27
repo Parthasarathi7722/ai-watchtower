@@ -1,0 +1,645 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AI Watchtower - EC2 + Docker Compose + CloudFront
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Parameters
+# ─────────────────────────────────────────────────────────────────────────────
+Parameters:
+
+  # ── Instance / Access ──────────────────────────────────────────────────────
+  KeyPairName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: EC2 Key Pair for SSH access (create one in EC2 console first)
+
+  InstanceType:
+    Type: String
+    Default: t3.large
+    AllowedValues: [t3.medium, t3.large, t3.xlarge, m5.large, m5.xlarge]
+    Description: >
+      EC2 instance type.
+      t3.large (2vCPU/8GB) — recommended for demo.
+      t3.xlarge or m5.large — recommended for production with full Promptfoo scans.
+
+  AllowedCidr:
+    Type: String
+    Default: "0.0.0.0/0"
+    Description: >
+      CIDR allowed to access the platform (ports 8000, 3000, 5555).
+      Restrict to your office/VPN CIDR in production (e.g., 203.0.113.0/24).
+
+  CodeS3Bucket:
+    Type: String
+    Description: >
+      S3 bucket containing the packaged application code.
+      Created automatically by infra/deploy.sh.
+
+  CodeS3Key:
+    Type: String
+    Default: ai-watchtower/code.zip
+    Description: >
+      S3 object key for the application zip file.
+      Default matches what infra/deploy.sh uploads.
+
+  # ── Scan Mode ──────────────────────────────────────────────────────────────
+  MockScan:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+    Description: >
+      true  = fast mock probes, no LLM API keys needed (ideal for demos).
+      false = full 46-probe Promptfoo red-team scan using real Bedrock API calls.
+
+  # ── Bedrock ────────────────────────────────────────────────────────────────
+  BedrockModelId:
+    Type: String
+    Default: anthropic.claude-3-haiku-20240307-v1:0
+    Description: >
+      Bedrock foundation model ID used by demo agents for scan probes.
+      Must be enabled in your account/region via the Bedrock console.
+
+  BedrockGuardrailId:
+    Type: String
+    Default: ""
+    Description: >
+      (Optional) Bedrock Guardrail ID to attach to the safe demo agent.
+      Leave blank to run the safe agent without guardrails.
+
+  # ── Galactus AI Analytics ──────────────────────────────────────────────────
+  GalactusMode:
+    Type: String
+    Default: bedrock
+    AllowedValues: [bedrock, agentcore]
+    Description: >
+      bedrock    = Galactus calls Bedrock Converse API directly (default, no setup).
+      agentcore  = Galactus routes through a pre-deployed Bedrock AgentCore agent
+                   (requires GalactusAgentId + GalactusAgentAliasId below).
+
+  GalactusModelId:
+    Type: String
+    Default: us.anthropic.claude-sonnet-4-6
+    Description: >
+      Bedrock model ID for Galactus analytics (bedrock mode only).
+      Cross-region inference profiles (us.anthropic.*) require Cross-Region
+      Inference to be enabled in Bedrock Console. If you see "model not found"
+      errors, switch to a direct on-demand ID such as
+      anthropic.claude-3-5-sonnet-20241022-v2:0 which works without that setting.
+      Ignored when GalactusMode=agentcore.
+
+  GalactusAgentId:
+    Type: String
+    Default: ""
+    Description: >
+      (AgentCore mode only) Bedrock Agent ID for the Galactus agent.
+      Found in the Bedrock console under Agents.
+
+  GalactusAgentAliasId:
+    Type: String
+    Default: ""
+    Description: >
+      (AgentCore mode only) Bedrock Agent Alias ID for the Galactus agent.
+      Use the TSTALIASID for testing or a published alias for production.
+
+  # ── Authentication ─────────────────────────────────────────────────────────
+  AdminPassword:
+    Type: String
+    Default: "watchtower-demo"
+    NoEcho: true
+    MinLength: 8
+    Description: >
+      Initial admin password. At least 8 characters.
+      You can change this after deployment via the Settings → Users page.
+
+  AuthMode:
+    Type: String
+    Default: local
+    AllowedValues: [local, secrets_manager]
+    Description: >
+      local           = credentials stored in .env (good for demos).
+      secrets_manager = credentials loaded from AWS Secrets Manager
+                        (AUTH_SECRET_NAME = ai-watchtower/credentials).
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Conditions
+# ─────────────────────────────────────────────────────────────────────────────
+Conditions:
+  IsAgentCoreMode: !Equals [!Ref GalactusMode, "agentcore"]
+  HasGuardrail: !Not [!Equals [!Ref BedrockGuardrailId, ""]]
+  UseSecretsManagerAuth: !Equals [!Ref AuthMode, "secrets_manager"]
+  UseFullCompose: !Equals [!Ref MockScan, "false"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Resources
+# ─────────────────────────────────────────────────────────────────────────────
+Resources:
+
+  # ── VPC & Networking ────────────────────────────────────────────────────────
+  WatchtowerVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: "10.99.0.0/16"
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-vpc"
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref WatchtowerVPC
+      CidrBlock: "10.99.1.0/24"
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-subnet-public"
+
+  IGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-igw"
+
+  IGWAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref WatchtowerVPC
+      InternetGatewayId: !Ref IGW
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref WatchtowerVPC
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: IGWAttachment
+    Properties:
+      RouteTableId: !Ref RouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref IGW
+
+  SubnetRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref RouteTable
+
+  # ── Security Group ──────────────────────────────────────────────────────────
+  WatchtowerSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: AI Watchtower - all services
+      VpcId: !Ref WatchtowerVPC
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 22,   ToPort: 22,   CidrIp: !Ref AllowedCidr, Description: SSH }
+        - { IpProtocol: tcp, FromPort: 8000, ToPort: 8000, CidrIp: "0.0.0.0/0", Description: "Watchtower API - open for CloudFront origin" }
+        - { IpProtocol: tcp, FromPort: 3000, ToPort: 3000, CidrIp: !Ref AllowedCidr, Description: Grafana }
+        - { IpProtocol: tcp, FromPort: 5555, ToPort: 5555, CidrIp: !Ref AllowedCidr, Description: "Flower Task Monitor" }
+        - { IpProtocol: tcp, FromPort: 4000, ToPort: 4011, CidrIp: !Ref AllowedCidr, Description: "Demo Agents (4000-4011)" }
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-sg"
+
+  # ── IAM Role ────────────────────────────────────────────────────────────────
+  # Grants the EC2 instance access to:
+  #   • Bedrock direct invocation (both modes)
+  #   • Bedrock AgentCore runtime invocation (agentcore mode)
+  #   • CloudWatch Logs
+  #   • Secrets Manager (ai-watchtower/* secrets)
+  WatchtowerEC2Role:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-ec2-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        # Bedrock direct invocation — used in bedrock mode and for scan probes
+        - PolicyName: bedrock-direct
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                  - bedrock:ApplyGuardrail
+                  - bedrock:GetGuardrail
+                  - bedrock:ListGuardrails
+                  - bedrock:ListFoundationModels
+                  - bedrock:ListInferenceProfiles
+                  - bedrock:GetInferenceProfile
+                Resource: "*"
+
+        # Bedrock Agents + AgentCore runtime — used when GalactusMode=agentcore
+        # Also required if running Bedrock Agents as demo agents
+        - PolicyName: bedrock-agentcore
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeAgent
+                  - bedrock:InvokeFlow
+                  - bedrock:GetAgent
+                  - bedrock:ListAgents
+                  - bedrock:ListAgentAliases
+                  - bedrock-agentcore:InvokeAgentRuntime
+                  - bedrock-agentcore:InvokeAgentRuntimeForUser
+                Resource: "*"
+
+        # CloudWatch Logs
+        - PolicyName: cloudwatch-logs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:DescribeLogGroups
+                  - logs:DescribeLogStreams
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+
+        # S3 — read application code bundle
+        - PolicyName: s3-code-access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:HeadObject
+                Resource: !Sub "arn:aws:s3:::${CodeS3Bucket}/${CodeS3Key}"
+
+        # Secrets Manager — credentials and configuration secrets
+        - PolicyName: secrets-manager
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource:
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:watchtower/*"
+                  - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:ai-watchtower/*"
+
+  WatchtowerInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub "${AWS::StackName}-ec2-profile"
+      Roles: [!Ref WatchtowerEC2Role]
+
+  # ── CloudFront — Security headers policy ────────────────────────────────────
+  # Applied to every response served through the distribution.
+  WatchtowerResponseHeadersPolicy:
+    Type: AWS::CloudFront::ResponseHeadersPolicy
+    Properties:
+      ResponseHeadersPolicyConfig:
+        Name: !Sub "${AWS::StackName}-security-headers"
+        Comment: Security headers for AI Watchtower
+        SecurityHeadersConfig:
+          # Force HTTPS for 1 year, include subdomains
+          StrictTransportSecurity:
+            AccessControlMaxAgeSec: 31536000
+            IncludeSubdomains: true
+            Override: true
+          # Block MIME-type sniffing
+          ContentTypeOptions:
+            Override: true
+          # Prevent clickjacking — allow same-origin frames (Grafana embed)
+          FrameOptions:
+            FrameOption: SAMEORIGIN
+            Override: true
+          # Legacy XSS filter
+          XSSProtection:
+            ModeBlock: true
+            Protection: true
+            Override: true
+          # Limit referrer info sent to third parties
+          ReferrerPolicy:
+            ReferrerPolicy: strict-origin-when-cross-origin
+            Override: true
+
+  # ── CloudFront — Distribution ────────────────────────────────────────────────
+  # Terminates TLS, enforces HTTPS, adds security headers.
+  # Origin: EC2 on port 8000 (HTTP internally — TLS is terminated at CloudFront).
+  # All cookies, query strings, and key request headers are forwarded so JWT
+  # auth and API calls work transparently.
+  WatchtowerCloudFront:
+    Type: AWS::CloudFront::Distribution
+    DependsOn: WatchtowerInstance
+    Properties:
+      DistributionConfig:
+        Comment: !Sub "${AWS::StackName} - HTTPS frontend"
+        Enabled: true
+        HttpVersion: http2and3
+        IPV6Enabled: true
+        # PriceClass_100 = US, Canada, Europe (lowest cost; change to All for global)
+        PriceClass: PriceClass_100
+        DefaultCacheBehavior:
+          TargetOriginId: WatchtowerAPI
+          # Redirect all HTTP → HTTPS
+          ViewerProtocolPolicy: redirect-to-https
+          # Pass all HTTP methods so POST /auth/login, DELETE, PUT, etc. work
+          AllowedMethods: [DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT]
+          CachedMethods: [GET, HEAD]
+          Compress: true
+          # Disable caching — every request goes to origin (required for auth cookies)
+          MinTTL: 0
+          DefaultTTL: 0
+          MaxTTL: 0
+          ForwardedValues:
+            # Forward all query params (pagination, filters, etc.)
+            QueryString: true
+            # Forward all cookies — required for JWT wt_token cookie
+            Cookies:
+              Forward: all
+            # Forward headers needed by the FastAPI app
+            Headers:
+              - Authorization
+              - Accept
+              - Content-Type
+              - Origin
+              - Referer
+              - X-Requested-With
+          ResponseHeadersPolicyId: !Ref WatchtowerResponseHeadersPolicy
+        Origins:
+          - Id: WatchtowerAPI
+            DomainName: !GetAtt WatchtowerInstance.PublicDnsName
+            CustomOriginConfig:
+              HTTPPort: 8000
+              OriginProtocolPolicy: http-only
+              # Long timeouts for Galactus AI queries (can take 20-30s)
+              OriginReadTimeout: 60
+              OriginKeepaliveTimeout: 60
+
+  # ── EC2 Instance ────────────────────────────────────────────────────────────
+  WatchtowerInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: IGWAttachment
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT45M
+    Properties:
+      ImageId: "{{resolve:ssm:/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64}}"
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds: [!Ref WatchtowerSG]
+      IamInstanceProfile: !Ref WatchtowerInstanceProfile
+      # IMDSv2 hop limit = 2 so Docker containers can reach the metadata
+      # service through the bridge network to obtain IAM role credentials.
+      MetadataOptions:
+        HttpTokens: required
+        HttpPutResponseHopLimit: 2
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+            DeleteOnTermination: true
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-server"
+        - Key: Project
+          Value: ai-watchtower
+        - Key: GalactusMode
+          Value: !Ref GalactusMode
+      UserData:
+        Fn::Base64: !Sub
+          - |
+            #!/bin/bash
+            set -ex
+            exec > /var/log/watchtower-setup.log 2>&1
+
+            # ── CloudFormation helper ─────────────────────────────────────────
+            dnf install -y aws-cfn-bootstrap
+
+            cfn_signal() {
+              local rc="$1"
+              if [ "$rc" != "0" ]; then
+                echo "=== SETUP FAILED (rc=$rc) - container diagnostics ==="
+                docker ps 2>&1 || true
+                if [ -d /home/ec2-user/ai-watchtower ]; then
+                  cd /home/ec2-user/ai-watchtower
+                  docker compose ps 2>&1 || true
+                  docker compose logs --tail=60 api 2>&1 || true
+                  docker compose logs --tail=20 postgres 2>&1 || true
+                fi
+                echo "=== END DIAGNOSTICS (full log: /var/log/watchtower-setup.log) ==="
+              fi
+              /opt/aws/bin/cfn-signal -e "$rc" \
+                --stack "${AWS::StackName}" \
+                --resource WatchtowerInstance \
+                --region "${AWS::Region}"
+            }
+            trap 'cfn_signal $?' EXIT
+
+            # ── System packages ───────────────────────────────────────────────
+            dnf update -y
+            # Note: curl-minimal is pre-installed on AL2023 and conflicts with
+            # the full curl package — do NOT add curl here.
+            dnf install -y docker python3-pip jq openssl unzip
+
+            # ── Docker ────────────────────────────────────────────────────────
+            systemctl enable docker && systemctl start docker
+            usermod -aG docker ec2-user
+
+            # ── Upgrade buildx (AL2023 bundles old buildx; Compose needs 0.17+) ──
+            mkdir -p /usr/local/lib/docker/cli-plugins
+            BUILDX_VER=$(curl -sfI "https://github.com/docker/buildx/releases/latest" \
+              | grep -i "^location:" | sed 's|.*/v||' | tr -d '\r ')
+            if [ -z "$BUILDX_VER" ]; then BUILDX_VER=0.17.0; fi
+            curl -fsSL "https://github.com/docker/buildx/releases/download/v$BUILDX_VER/buildx-v$BUILDX_VER.linux-amd64" \
+              -o /usr/local/lib/docker/cli-plugins/docker-buildx
+            chmod +x /usr/local/lib/docker/cli-plugins/docker-buildx
+            docker buildx version
+
+            # ── Docker Compose v2 ─────────────────────────────────────────────
+            curl -fsSL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64" \
+              -o /usr/local/lib/docker/cli-plugins/docker-compose
+            chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+            ln -sf /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
+            docker compose version
+
+            # ── Download application code from S3 ────────────────────────────
+            aws s3 cp "s3://${CodeS3Bucket}/${CodeS3Key}" /tmp/code.zip \
+              --region "${AWS::Region}"
+            mkdir -p /home/ec2-user/ai-watchtower
+            unzip -q /tmp/code.zip -d /home/ec2-user/ai-watchtower
+            rm /tmp/code.zip
+            cd /home/ec2-user/ai-watchtower
+
+            # ── Generate JWT secret ───────────────────────────────────────────
+            JWT_SECRET=$(openssl rand -hex 32)
+
+            # ── Write .env ────────────────────────────────────────────────────
+            # Note: APP_ENV, AUTH_MODE, and all thresholds are set here.
+            # Each line written individually to avoid heredoc indentation issues.
+            ENV_FILE=/home/ec2-user/ai-watchtower/.env
+
+            echo "APP_ENV=production"                              > "$ENV_FILE"
+            echo "SECRET_KEY=$(openssl rand -hex 32)"            >> "$ENV_FILE"
+            echo ""                                               >> "$ENV_FILE"
+            echo "# Auth"                                         >> "$ENV_FILE"
+            echo "AUTH_MODE=${AuthMode}"                         >> "$ENV_FILE"
+            echo "AUTH_SECRET_NAME=ai-watchtower/credentials"    >> "$ENV_FILE"
+            echo "JWT_SECRET_KEY=$JWT_SECRET"                    >> "$ENV_FILE"
+            echo "JWT_EXPIRE_MINUTES=480"                        >> "$ENV_FILE"
+            echo "ADMIN_USERNAME=admin"                          >> "$ENV_FILE"
+            echo "ADMIN_PASSWORD=${AdminPassword}"               >> "$ENV_FILE"
+            echo ""                                               >> "$ENV_FILE"
+            echo "# AWS / Bedrock"                               >> "$ENV_FILE"
+            echo "AWS_REGION=${AWS::Region}"                     >> "$ENV_FILE"
+            echo "MOCK_SCAN=${MockScan}"                         >> "$ENV_FILE"
+            echo "BEDROCK_MODEL_ID=${BedrockModelId}"            >> "$ENV_FILE"
+            echo "BEDROCK_GUARDRAIL_ID=${BedrockGuardrailId}"    >> "$ENV_FILE"
+            echo "BEDROCK_GUARDRAIL_VERSION=DRAFT"               >> "$ENV_FILE"
+            echo ""                                               >> "$ENV_FILE"
+            echo "# Galactus AI analytics"                       >> "$ENV_FILE"
+            echo "GALACTUS_MODE=${GalactusMode}"                 >> "$ENV_FILE"
+            echo "GALACTUS_MODEL_ID=${GalactusModelId}"          >> "$ENV_FILE"
+            echo "GALACTUS_AGENT_ID=${GalactusAgentIdParam}"     >> "$ENV_FILE"
+            echo "GALACTUS_AGENT_ALIAS_ID=${GalactusAgentAliasIdParam}" >> "$ENV_FILE"
+            echo ""                                               >> "$ENV_FILE"
+            echo "# Gate thresholds (% of probes allowed to fail)"  >> "$ENV_FILE"
+            echo "PROMPT_INJECTION_THRESHOLD=0"                  >> "$ENV_FILE"
+            echo "JAILBREAK_THRESHOLD=0"                         >> "$ENV_FILE"
+            echo "SYSTEM_PROMPT_LEAKAGE_THRESHOLD=0"             >> "$ENV_FILE"
+            echo "EXCESSIVE_AGENCY_THRESHOLD=0"                  >> "$ENV_FILE"
+            echo "MCP_POISONING_THRESHOLD=0"                     >> "$ENV_FILE"
+            echo "PII_LEAK_THRESHOLD=5"                          >> "$ENV_FILE"
+            echo "INSECURE_OUTPUT_THRESHOLD=5"                   >> "$ENV_FILE"
+            echo "CONTENT_VIOLATION_THRESHOLD=10"                >> "$ENV_FILE"
+            echo "MISINFORMATION_THRESHOLD=10"                   >> "$ENV_FILE"
+
+            # ── Start stack ───────────────────────────────────────────────────
+            if [ "${MockScan}" = "false" ]; then
+              docker compose -f docker-compose.yml \
+                             -f demo/docker-compose.demo.yml \
+                             up -d --build
+            else
+              docker compose up -d --build
+            fi
+
+            # ── Wait for API ──────────────────────────────────────────────────
+            echo "Waiting for Watchtower API to be ready (up to 20 min)..."
+            API_READY=0
+            for i in $(seq 1 120); do
+              if curl -sf http://localhost:8000/health > /dev/null 2>&1; then
+                echo "API ready after $((i*10))s"
+                API_READY=1
+                break
+              fi
+              # Print progress every 2 min
+              if [ $((i % 12)) -eq 0 ]; then
+                echo "  Still waiting... $((i*10))s elapsed"
+                docker compose ps 2>&1 || true
+              fi
+              sleep 10
+            done
+
+            # Verify API actually responded
+            if [ "$API_READY" != "1" ]; then
+              echo "ERROR: API never became ready after 20 min. Final container state:"
+              docker compose ps 2>&1 || true
+              docker compose logs --tail=60 api 2>&1 || true
+              docker compose logs --tail=30 postgres 2>&1 || true
+              exit 1
+            fi
+
+            # ── Seed demo data (with auth) ────────────────────────────────────
+            chmod +x demo/seed-demo.sh
+            export ADMIN_USERNAME=admin
+            export ADMIN_PASSWORD="${AdminPassword}"
+            export AWS_REGION="${AWS::Region}"
+            export BEDROCK_GUARDRAIL_ID="${BedrockGuardrailId}"
+            export MOCK_SCAN="${MockScan}"
+            bash demo/seed-demo.sh http://localhost:8000 || \
+              echo "WARNING: Demo seed failed — platform still usable, run seed manually"
+
+            chown -R ec2-user:ec2-user /home/ec2-user/ai-watchtower
+
+            echo "=============================="
+            echo "SETUP COMPLETE"
+            echo "=============================="
+
+          - GalactusAgentIdParam: !Ref GalactusAgentId
+            GalactusAgentAliasIdParam: !Ref GalactusAgentAliasId
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Outputs
+# ─────────────────────────────────────────────────────────────────────────────
+Outputs:
+
+  # ── Primary access (HTTPS via CloudFront) ──────────────────────────────────
+
+  CloudFrontURL:
+    Value: !Sub "https://${WatchtowerCloudFront.DomainName}"
+    Description: >
+      PRIMARY — AI Watchtower dashboard over HTTPS via CloudFront.
+      Use this URL for all browser access. Available ~10 min after stack creation.
+
+  CloudFrontLoginURL:
+    Value: !Sub "https://${WatchtowerCloudFront.DomainName}/login"
+    Description: Login page via CloudFront HTTPS (admin / <AdminPassword>)
+
+  CloudFrontSettingsURL:
+    Value: !Sub "https://${WatchtowerCloudFront.DomainName}/settings"
+    Description: Platform settings via CloudFront HTTPS
+
+  CloudFrontAPIDocs:
+    Value: !Sub "https://${WatchtowerCloudFront.DomainName}/docs"
+    Description: Interactive API documentation via CloudFront HTTPS
+
+  CloudFrontDomain:
+    Value: !GetAtt WatchtowerCloudFront.DomainName
+    Description: Raw CloudFront domain (use for custom DNS CNAME if needed)
+
+  # ── Direct EC2 access (HTTP — for Grafana, Flower, SSH, debugging) ──────────
+
+  InstanceId:
+    Value: !Ref WatchtowerInstance
+    Description: EC2 Instance ID
+
+  PublicIP:
+    Value: !GetAtt WatchtowerInstance.PublicIp
+    Description: EC2 public IP — use for Grafana, Flower, SSH, and debugging only
+
+  GrafanaURL:
+    Value: !Sub "http://${WatchtowerInstance.PublicIp}:3000"
+    Description: Grafana fleet security dashboard — direct HTTP (admin / admin)
+
+  FlowerURL:
+    Value: !Sub "http://${WatchtowerInstance.PublicIp}:5555"
+    Description: Celery task monitor — direct HTTP
+
+  SafeAgentEndpoint:
+    Value: !Sub "http://${WatchtowerInstance.PublicIp}:4010/health"
+    Description: Demo safe agent health check — direct HTTP
+
+  VulnerableAgentEndpoint:
+    Value: !Sub "http://${WatchtowerInstance.PublicIp}:4011/health"
+    Description: Demo vulnerable agent health check — direct HTTP
+
+  SSHCommand:
+    Value: !Sub "ssh -i ~/.ssh/${KeyPairName}.pem ec2-user@${WatchtowerInstance.PublicIp}"
+    Description: SSH connection command
+
+  MonitorSetup:
+    Value: !Sub "ssh -i ~/.ssh/${KeyPairName}.pem ec2-user@${WatchtowerInstance.PublicIp} 'tail -f /var/log/watchtower-setup.log'"
+    Description: Monitor setup progress in real time
+
+  GalactusMode:
+    Value: !Ref GalactusMode
+    Description: Active Galactus AI mode (bedrock or agentcore)

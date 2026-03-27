@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AI Watchtower — Sign In</title>
+<style>
+  :root{
+    --bg:#0f1117;--surface:#1a1f2e;--surface2:#1e293b;
+    --border:#2d3748;--text:#e2e8f0;--muted:#94a3b8;--subtle:#475569;
+    --blue:#3b82f6;--green:#10b981;--red:#ef4444;--yellow:#f59e0b;
+    --purple:#8b5cf6;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;font-size:14px;
+    min-height:100vh;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding:24px;
+  }
+
+  /* Brand */
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;flex-shrink:0}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .logo{font-size:20px;font-weight:700;letter-spacing:.5px}
+  .logo span{color:var(--red)}
+  .tagline{font-size:12px;color:var(--subtle);margin-bottom:32px;text-align:center}
+
+  /* Card */
+  .card{
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    padding:32px;width:100%;max-width:380px;
+  }
+  .card-title{font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+    color:var(--muted);margin-bottom:24px;text-align:center}
+
+  /* Form */
+  .form-group{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
+  label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  input{
+    background:var(--surface2);border:1px solid var(--border);border-radius:6px;
+    padding:10px 12px;color:var(--text);font-size:13px;width:100%;transition:border-color .15s;
+  }
+  input:focus{outline:none;border-color:var(--blue)}
+  input::placeholder{color:var(--subtle)}
+
+  /* Password wrapper */
+  .pw-wrap{position:relative}
+  .pw-wrap input{padding-right:52px}
+  .pw-toggle{
+    position:absolute;right:10px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:var(--subtle);font-size:11px;cursor:pointer;
+    padding:2px 4px;border-radius:3px;
+  }
+  .pw-toggle:hover{color:var(--muted)}
+
+  /* Error */
+  .error-msg{
+    display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);
+    border-radius:6px;padding:9px 12px;font-size:12px;color:#f87171;margin-bottom:14px;
+    display:none;align-items:flex-start;gap:8px;
+  }
+  .error-msg.visible{display:flex}
+
+  /* Button */
+  .btn-login{
+    width:100%;padding:11px;background:var(--blue);color:#fff;border:none;
+    border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;
+    transition:opacity .15s;letter-spacing:.2px;
+  }
+  .btn-login:hover{opacity:.88}
+  .btn-login:disabled{opacity:.5;cursor:not-allowed}
+
+  /* Auth provider badge */
+  .auth-provider{
+    margin-top:20px;padding:10px 14px;background:var(--surface2);
+    border:1px solid var(--border);border-radius:7px;
+    font-size:11px;color:var(--muted);display:flex;align-items:center;gap:8px;
+  }
+  .auth-provider .dot-sm{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  .dot-green{background:var(--green)}
+  .dot-purple{background:var(--purple)}
+  .dot-yellow{background:var(--yellow)}
+  .dot-blue{background:var(--blue)}
+
+  /* SSO coming soon */
+  .sso-note{
+    margin-top:10px;font-size:11px;color:var(--subtle);text-align:center;padding:0 4px;
+  }
+  .sso-note a{color:var(--purple);text-decoration:none}
+  .sso-note a:hover{text-decoration:underline}
+
+  /* Spinner */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{
+    display:inline-block;width:12px;height:12px;border:2px solid rgba(255,255,255,.3);
+    border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;
+    vertical-align:middle;margin-right:6px;
+  }
+
+  /* Footer */
+  .footer{margin-top:28px;font-size:11px;color:var(--subtle);text-align:center}
+</style>
+</head>
+<body>
+
+<div class="brand">
+  <div class="dot"></div>
+  <div class="logo">AI <span>Watchtower</span></div>
+</div>
+<p class="tagline">AI Agent Security Platform</p>
+
+<div class="card">
+  <div class="card-title">Secure Access</div>
+
+  <form id="login-form" onsubmit="doLogin(event)" autocomplete="on">
+    <div class="form-group">
+      <label>Username</label>
+      <input id="username" name="username" type="text"
+             autocomplete="username" required autofocus placeholder="admin"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input id="password" name="password" type="password"
+               autocomplete="current-password" required placeholder="••••••••"/>
+        <button type="button" class="pw-toggle" id="pw-toggle" onclick="togglePw()">show</button>
+      </div>
+    </div>
+
+    <div class="error-msg" id="error-msg">
+      <span>⚠</span><span id="error-text">Invalid username or password.</span>
+    </div>
+
+    <button type="submit" class="btn-login" id="login-btn">Sign In</button>
+  </form>
+
+  <div class="auth-provider" id="auth-provider">
+    <div class="dot-sm dot-yellow"></div>
+    <span id="auth-label">Loading auth config…</span>
+  </div>
+
+  <div class="sso-note" id="sso-note" style="display:none">
+    SSO (Okta / Cognito) can be enabled via <code>AUTH_MODE</code> in <code>.env</code>
+  </div>
+</div>
+
+<div class="footer">AI Watchtower · Pre-deployment AI Security Gate</div>
+
+<script>
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('error-msg');
+  const errTxt = document.getElementById('error-text');
+
+  errEl.classList.remove('visible');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Signing in…';
+
+  try {
+    const r = await fetch('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value,
+      }),
+      credentials: 'same-origin',
+    });
+
+    if (r.ok) {
+      // Redirect to the page the user originally tried to visit, or home
+      const next = new URLSearchParams(window.location.search).get('next') || '/';
+      window.location.href = next;
+    } else {
+      const data = await r.json().catch(() => ({}));
+      errTxt.textContent = data.detail || 'Invalid username or password.';
+      errEl.classList.add('visible');
+    }
+  } catch (_) {
+    errTxt.textContent = 'Network error — make sure the API is running.';
+    errEl.classList.add('visible');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In';
+  }
+}
+
+function togglePw() {
+  const inp = document.getElementById('password');
+  const btn = document.getElementById('pw-toggle');
+  const isHidden = inp.type === 'password';
+  inp.type = isHidden ? 'text' : 'password';
+  btn.textContent = isHidden ? 'hide' : 'show';
+}
+
+// Load auth mode info from the server and update the badge
+(async () => {
+  try {
+    const s = await fetch('/auth/status').then(r => r.json());
+    const label = document.getElementById('auth-label');
+    const dot   = document.querySelector('.auth-provider .dot-sm');
+    const ssoNote = document.getElementById('sso-note');
+
+    if (s.auth_mode === 'secrets_manager') {
+      dot.className = 'dot-sm dot-green';
+      label.textContent = `AWS Secrets Manager  ·  ${s.secret_name || ''}`;
+    } else if (s.auth_mode === 'cognito') {
+      dot.className = 'dot-sm dot-blue';
+      label.textContent = 'AWS Cognito (SSO)';
+      ssoNote.style.display = '';
+    } else if (s.auth_mode === 'okta') {
+      dot.className = 'dot-sm dot-purple';
+      label.textContent = 'Okta SSO (SAML / OIDC)';
+      ssoNote.style.display = '';
+    } else {
+      dot.className = 'dot-sm dot-yellow';
+      label.textContent = 'Local auth  ·  switch to secrets_manager for production';
+      ssoNote.style.display = '';
+    }
+  } catch (_) { /* silently ignore — badge just stays as loading */ }
+})();
+</script>
+</body>
+</html>

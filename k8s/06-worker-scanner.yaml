@@ -1,0 +1,96 @@
+---
+# Celery Worker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: ai-watchtower
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      serviceAccountName: watchtower-sa
+      containers:
+        - name: worker
+          image: <YOUR_ECR_REPO>/watchtower-api:latest
+          command: ["celery", "-A", "tasks.celery_app", "worker", "--loglevel=info", "--concurrency=4"]
+          envFrom:
+            - configMapRef:
+                name: watchtower-config
+            - secretRef:
+                name: watchtower-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 2
+              memory: 2Gi
+---
+# Scanner Service (Promptfoo — CPU-intensive, given dedicated nodes)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scanner
+  namespace: ai-watchtower
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: scanner
+  template:
+    metadata:
+      labels:
+        app: scanner
+    spec:
+      serviceAccountName: watchtower-sa
+      containers:
+        - name: scanner
+          image: <YOUR_ECR_REPO>/watchtower-scanner:latest
+          ports:
+            - containerPort: 3001
+          envFrom:
+            - configMapRef:
+                name: watchtower-config
+            - secretRef:
+                name: watchtower-secrets
+          env:
+            - name: PROMPTFOO_DISABLE_TELEMETRY
+              value: "1"
+          volumeMounts:
+            - name: promptfoo-cache
+              mountPath: /root/.promptfoo
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 1
+              memory: 1Gi
+            limits:
+              cpu: 4
+              memory: 4Gi
+      volumes:
+        - name: promptfoo-cache
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: scanner-svc
+  namespace: ai-watchtower
+spec:
+  selector:
+    app: scanner
+  ports:
+    - port: 3001
+      targetPort: 3001

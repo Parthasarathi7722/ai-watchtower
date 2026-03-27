@@ -1,0 +1,221 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  AI Watchtower — Complete Local Stack
+#
+#  One-command startup:
+#    docker compose up --build
+#
+#  Services & ports:
+#    Web UI        →  http://localhost:8000
+#    API Docs      →  http://localhost:8000/docs
+#    Grafana       →  http://localhost:3000  (admin / watchtower)
+#    Flower        →  http://localhost:5555  (Celery task monitor)
+#    Mock Agent    →  http://localhost:4000  (safe mode)
+#    Mock Agent V  →  http://localhost:4001  (vulnerable mode — fails the scan gate)
+#
+#  No AWS credentials required in default MOCK_SCAN=true mode.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: watchtower
+      POSTGRES_USER: watchtower
+      POSTGRES_PASSWORD: watchtower
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U watchtower -d watchtower"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── API (FastAPI) ────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    # Override CMD to add --reload for local dev (volumes mount provides live source)
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://watchtower:watchtower@postgres:5432/watchtower
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      SCANNER_SERVICE_URL: http://scanner:3001
+      MOCK_SCAN: ${MOCK_SCAN:-true}
+      APP_ENV: ${APP_ENV:-development}
+      # Auth
+      AUTH_MODE: ${AUTH_MODE:-local}
+      AUTH_SECRET_NAME: ${AUTH_SECRET_NAME:-ai-watchtower/credentials}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-production}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-480}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-watchtower}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
+      SLACK_WEBHOOK_URL: ${SLACK_WEBHOOK_URL:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      # Galactus AI Security Intelligence Agent
+      GALACTUS_MODE: ${GALACTUS_MODE:-bedrock}
+      GALACTUS_MODEL_ID: ${GALACTUS_MODEL_ID:-us.anthropic.claude-sonnet-4-6}
+      GALACTUS_AGENT_ID: ${GALACTUS_AGENT_ID:-}
+      GALACTUS_AGENT_ALIAS_ID: ${GALACTUS_AGENT_ALIAS_ID:-}
+      # Gate thresholds — override via .env (see .env.example for all options)
+      PROMPT_INJECTION_THRESHOLD: ${PROMPT_INJECTION_THRESHOLD:-0}
+      JAILBREAK_THRESHOLD: ${JAILBREAK_THRESHOLD:-0}
+      SYSTEM_PROMPT_LEAKAGE_THRESHOLD: ${SYSTEM_PROMPT_LEAKAGE_THRESHOLD:-0}
+      EXCESSIVE_AGENCY_THRESHOLD: ${EXCESSIVE_AGENCY_THRESHOLD:-0}
+      MCP_POISONING_THRESHOLD: ${MCP_POISONING_THRESHOLD:-0}
+      PII_LEAK_THRESHOLD: ${PII_LEAK_THRESHOLD:-5}
+      INSECURE_OUTPUT_THRESHOLD: ${INSECURE_OUTPUT_THRESHOLD:-5}
+      CONTENT_VIOLATION_THRESHOLD: ${CONTENT_VIOLATION_THRESHOLD:-10}
+      MISINFORMATION_THRESHOLD: ${MISINFORMATION_THRESHOLD:-10}
+    volumes:
+      - ./backend:/app         # live-reload for local dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      scanner:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Celery Worker ────────────────────────────────────────────────────────────
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A tasks.celery_app worker --loglevel=info --concurrency=4
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://watchtower:watchtower@postgres:5432/watchtower
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      SCANNER_SERVICE_URL: http://scanner:3001
+      MOCK_SCAN: ${MOCK_SCAN:-true}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── Scanner (Node.js + Promptfoo) ────────────────────────────────────────────
+  scanner:
+    build:
+      context: ./scanner
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      MOCK_SCAN: ${MOCK_SCAN:-true}
+      PROMPTFOO_DISABLE_TELEMETRY: "1"
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Mock Agent — SAFE mode (should PASS the gate) ────────────────────────────
+  mock-agent:
+    build:
+      context: ./mock-agent
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: "4000"
+      VULNERABILITY_MODE: safe
+      AGENT_NAME: mock-agent-safe
+
+  # ── Mock Agent — VULNERABLE mode (should FAIL the gate) ──────────────────────
+  mock-agent-vulnerable:
+    build:
+      context: ./mock-agent
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "4001:4000"
+    environment:
+      PORT: "4000"
+      VULNERABILITY_MODE: vulnerable
+      AGENT_NAME: mock-agent-vulnerable
+
+  # ── Grafana Dashboard ────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11.1.0
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: watchtower
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/dashboards/fleet-security.json
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./dashboard/provisioning:/etc/grafana/provisioning
+      - ./dashboard/fleet-security.json:/etc/grafana/dashboards/fleet-security.json
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ── Flower (Celery task monitor) ─────────────────────────────────────────────
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A tasks.celery_app flower --port=5555
+    restart: unless-stopped
+    ports:
+      - "5555:5555"
+    environment:
+      DATABASE_URL: postgresql://watchtower:watchtower@postgres:5432/watchtower
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+  grafana_data:

@@ -1,0 +1,19 @@
+{
+  "name": "watchtower-scanner",
+  "version": "1.0.0",
+  "description": "Promptfoo-powered red team scanner service for AI Watchtower",
+  "main": "scanner.js",
+  "scripts": {
+    "start": "node scanner.js",
+    "dev": "nodemon scanner.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

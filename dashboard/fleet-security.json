@@ -1,0 +1,142 @@
+{
+  "id": null,
+  "uid": "ai-watchtower-fleet",
+  "title": "AI Watchtower — Fleet Security",
+  "tags": ["ai", "security", "watchtower"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Total Agents",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "watchtower-pg" },
+      "targets": [{
+        "rawSql": "SELECT COUNT(*)::int AS value FROM agents WHERE is_active = true",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "orientation": "auto", "textMode": "auto", "colorMode": "background" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "blue" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": 0 }] } } }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Approved for Production",
+      "gridPos": { "x": 4, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "watchtower-pg" },
+      "targets": [{
+        "rawSql": "SELECT COUNT(*)::int AS value FROM agents WHERE is_approved = true AND is_active = true",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "green" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }] } } }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Blocked (Gate Failed)",
+      "gridPos": { "x": 8, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "watchtower-pg" },
+      "targets": [{
+        "rawSql": "SELECT COUNT(*)::int AS value FROM agents WHERE is_approved = false AND is_active = true",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "red", "value": 1 }] } } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Security Events (24h)",
+      "gridPos": { "x": 12, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "watchtower-pg" },
+      "targets": [{
+        "rawSql": "SELECT COUNT(*)::int AS value FROM guardrail_events WHERE occurred_at > NOW() - INTERVAL '24 hours'",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 5 }, { "color": "red", "value": 20 }] } } }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Critical Events (24h)",
+      "gridPos": { "x": 16, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "watchtower-pg" },
+      "targets": [{
+        "rawSql": "SELECT COUNT(*)::int AS value FROM guardrail_events WHERE severity = 'critical' AND occurred_at > NOW() - INTERVAL '24 hours'",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "red", "value": 1 }] } } }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "Total Scans Run",
+      "gridPos": { "x": 20, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "postgres", "uid": "watchtower-pg" },
+      "targets": [{
+        "rawSql": "SELECT COUNT(*)::int AS value FROM scan_results",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": { "defaults": { "color": { "mode": "fixed", "fixedColor": "purple" } } }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Security Events Over Time (24h)",
+      "gridPos": { "x": 0, "y": 4, "w": 16, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "watchtower-pg" },
+      "targets": [{
+        "rawSql": "SELECT date_trunc('hour', occurred_at) AS time, event_type AS metric, COUNT(*)::int AS value FROM guardrail_events WHERE occurred_at > NOW() - INTERVAL '24 hours' GROUP BY 1, 2 ORDER BY 1",
+        "format": "time_series",
+        "refId": "A"
+      }],
+      "options": { "tooltip": { "mode": "multi" } },
+      "fieldConfig": { "defaults": { "custom": { "lineWidth": 2, "fillOpacity": 15 } } }
+    },
+    {
+      "id": 8,
+      "type": "piechart",
+      "title": "Events by Type (24h)",
+      "gridPos": { "x": 16, "y": 4, "w": 8, "h": 8 },
+      "datasource": { "type": "postgres", "uid": "watchtower-pg" },
+      "targets": [{
+        "rawSql": "SELECT event_type AS \"Event Type\", COUNT(*)::int AS \"Count\" FROM guardrail_events WHERE occurred_at > NOW() - INTERVAL '24 hours' GROUP BY 1 ORDER BY 2 DESC",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": { "pieType": "donut", "tooltip": { "mode": "multi" } }
+    },
+    {
+      "id": 9,
+      "type": "table",
+      "title": "Agent Fleet — Risk Overview",
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 10 },
+      "datasource": { "type": "postgres", "uid": "watchtower-pg" },
+      "targets": [{
+        "rawSql": "SELECT a.team_name AS \"Team\", a.name AS \"Agent\", a.framework AS \"Framework\", a.owner_email AS \"Owner\", CASE WHEN a.is_approved THEN 'PASSED' ELSE 'BLOCKED' END AS \"Gate Status\", COALESCE(s.overall_risk_score, 0)::numeric(5,1) AS \"Risk Score %\", COUNT(ge.id)::int AS \"Events 24h\", MAX(s.completed_at) AS \"Last Scan\" FROM agents a LEFT JOIN scan_results s ON s.agent_id = a.id AND s.id = (SELECT id FROM scan_results WHERE agent_id = a.id ORDER BY created_at DESC LIMIT 1) LEFT JOIN guardrail_events ge ON ge.agent_id = a.id AND ge.occurred_at > NOW() - INTERVAL '24 hours' WHERE a.is_active = true GROUP BY a.id, a.team_name, a.name, a.framework, a.owner_email, a.is_approved, s.overall_risk_score, s.completed_at ORDER BY COUNT(ge.id) DESC, COALESCE(s.overall_risk_score, 0) DESC",
+        "format": "table",
+        "refId": "A"
+      }],
+      "options": { "sortBy": [{ "displayName": "Events 24h", "desc": true }] },
+      "fieldConfig": {
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Gate Status" }, "properties": [{ "id": "custom.displayMode", "value": "color-background" }, { "id": "mappings", "value": [{ "type": "value", "options": { "PASSED": { "color": "green", "index": 0 }, "BLOCKED": { "color": "red", "index": 1 } } }] }] },
+          { "matcher": { "id": "byName", "options": "Risk Score %" }, "properties": [{ "id": "custom.displayMode", "value": "gradient-gauge" }, { "id": "thresholds", "value": { "mode": "absolute", "steps": [{ "color": "green", "value": 0 }, { "color": "yellow", "value": 20 }, { "color": "red", "value": 50 }] } }, { "id": "max", "value": 100 }] }
+        ]
+      }
+    }
+  ]
+}
