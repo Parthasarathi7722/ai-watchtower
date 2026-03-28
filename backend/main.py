@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
 from database import get_db, init_db
-from models import Agent, ScanResult, GuardrailEvent, AlertConfig, ScanStatus, SeverityLevel
+from models import Agent, ScanResult, GuardrailEvent, AlertConfig, ProbeLibrary, ScanStatus, SeverityLevel
 from tasks import trigger_scan_task
 from alerting import send_alert
 from config import settings, get_scan_mode, set_scan_mode
@@ -560,6 +560,91 @@ def galactus_insight(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Galactus insight error: {e}")
+
+
+class FuzzRequest(BaseModel):
+    agent_id: str
+    model_id: Optional[str] = None
+
+
+@app.post(
+    "/api/v1/galactus/fuzz",
+    summary="Trigger autonomous agentic red-team fuzzing for an agent",
+)
+def galactus_fuzz(req: FuzzRequest, db: Session = Depends(get_db)):
+    """
+    Starts an autonomous Galactus fuzzing session for the specified agent.
+
+    Galactus will:
+      1. Analyse the agent's known scan failures.
+      2. Search the built-in attack pattern library for relevant probe variants.
+      3. Generate novel probe variants and test them live against the agent's endpoint.
+      4. Save every successful bypass to the agent's ProbeLibrary.
+      5. Return a full report with techniques that worked.
+
+    Runs synchronously (completes in ~60–120 s depending on how many probes are tested).
+    Requires MOCK_SCAN=false or the scanner's /probe endpoint to be reachable.
+    """
+    agent = db.query(Agent).filter(
+        Agent.id == req.agent_id, Agent.is_active == True
+    ).first()
+    if not agent:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    try:
+        result = galactus_engine.fuzz(req.agent_id, db, req.model_id)
+        return result
+    except ModuleNotFoundError as e:
+        raise HTTPException(status_code=503, detail=f"boto3 not installed: {e}")
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Fuzz error: {e}")
+
+
+@app.get(
+    "/api/v1/galactus/probes/{agent_id}",
+    summary="Get probe library for an agent",
+)
+def galactus_get_probes(agent_id: str, db: Session = Depends(get_db)):
+    """Returns all probes in the agent's library — discovered by Galactus or added manually."""
+    probes = (
+        db.query(ProbeLibrary)
+        .filter(ProbeLibrary.agent_id == agent_id, ProbeLibrary.is_active == True)
+        .order_by(ProbeLibrary.created_at.desc())
+        .all()
+    )
+    return {
+        "agent_id": agent_id,
+        "count": len(probes),
+        "probes": [
+            {
+                "id":           str(p.id),
+                "category":     p.category,
+                "owasp_ref":    p.owasp_ref,
+                "probe_text":   p.probe_text,
+                "source":       p.source,
+                "success_rate": p.success_rate,
+                "times_tested": p.times_tested,
+                "notes":        p.notes,
+                "created_at":   p.created_at.isoformat() if p.created_at else None,
+                "last_tested_at": p.last_tested_at.isoformat() if p.last_tested_at else None,
+            }
+            for p in probes
+        ],
+    }
+
+
+@app.delete(
+    "/api/v1/galactus/probes/{probe_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Deactivate a probe from the library",
+)
+def galactus_delete_probe(probe_id: str, db: Session = Depends(get_db)):
+    probe = db.query(ProbeLibrary).filter(ProbeLibrary.id == probe_id).first()
+    if not probe:
+        raise HTTPException(status_code=404, detail="Probe not found")
+    probe.is_active = False
+    db.commit()
 
 
 @app.get(

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Float, Boolean, DateTime, JSON, Text, ForeignKey, Enum
+from sqlalchemy import Column, String, Float, Boolean, DateTime, JSON, Text, ForeignKey, Enum, Integer
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime, timezone
@@ -74,6 +74,7 @@ class Agent(Base):
     scans = relationship("ScanResult", back_populates="agent", cascade="all, delete-orphan")
     guardrail_events = relationship("GuardrailEvent", back_populates="agent", cascade="all, delete-orphan")
     alert_config = relationship("AlertConfig", back_populates="agent", uselist=False, cascade="all, delete-orphan")
+    probe_library = relationship("ProbeLibrary", back_populates="agent", cascade="all, delete-orphan")
 
 
 class ScanResult(Base):
@@ -145,6 +146,30 @@ class WatchtowerUser(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     last_login = Column(DateTime(timezone=True), nullable=True)
+
+
+class ProbeLibrary(Base):
+    """
+    Adversarial probes discovered by Galactus agentic fuzzing or added manually.
+    Tracks which probe texts bypass specific agents, enabling targeted re-testing.
+    """
+    __tablename__ = "probe_library"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    agent_id = Column(UUID(as_uuid=True), ForeignKey("agents.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    category = Column(String(100), nullable=False, index=True)  # prompt_injection, jailbreak, etc.
+    owasp_ref = Column(String(10), nullable=True)               # LLM01, LLM06, etc.
+    probe_text = Column(Text, nullable=False)
+    source = Column(String(50), default="galactus")             # galactus | manual | scanner
+    success_rate = Column(Float, default=0.0)                   # 0.0–1.0 fraction of runs that bypassed
+    times_tested = Column(Integer, default=0)
+    last_tested_at = Column(DateTime(timezone=True), nullable=True)
+    is_active = Column(Boolean, default=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+    agent = relationship("Agent", back_populates="probe_library")
 
 
 class AlertConfig(Base):
