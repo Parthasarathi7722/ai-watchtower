@@ -17,8 +17,11 @@ version: "3.9"
 #    BEDROCK_MODEL_ID    (default: anthropic.claude-3-haiku-20240307-v1:0)
 #    BEDROCK_GUARDRAIL_ID          (optional — Bedrock Guardrail for safe agent)
 #    BEDROCK_GUARDRAIL_VERSION     (optional — default DRAFT)
-#    WATCHTOWER_SAFE_AGENT_ID      (set after first seed run)
-#    WATCHTOWER_VULN_AGENT_ID      (set after first seed run)
+#    WATCHTOWER_SAFE_AGENT_ID      (optional — set to pre-seed bedrock safe agent ID)
+#    WATCHTOWER_VULN_AGENT_ID      (optional — set to pre-seed route-optimizer agent ID)
+#    WATCHTOWER_API_URL            (default: http://api:8000 — internal docker network)
+#
+#  Agents self-register with Watchtower on startup — no manual UUID management needed.
 #
 #  Switch to full Promptfoo scan (real LLM probes):
 #    Set MOCK_SCAN=false in environment before starting
@@ -68,7 +71,7 @@ services:
       BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-anthropic.claude-3-haiku-20240307-v1:0}
       BEDROCK_GUARDRAIL_ID: ${BEDROCK_GUARDRAIL_ID:-}
       BEDROCK_GUARDRAIL_VERSION: ${BEDROCK_GUARDRAIL_VERSION:-DRAFT}
-      AGENT_NAME: lytx-customer-support
+      AGENT_NAME: chaos2control-customer-support
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:4010/health"]
       interval: 10s
@@ -120,7 +123,12 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # Ollama
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      AGENT_NAME: lytx-driver-safety-intelligence
+      AGENT_NAME: chaos2control-driver-safety-intelligence
+      # Watchtower self-registration (no manual UUID needed)
+      WATCHTOWER_API_URL: ${WATCHTOWER_API_URL:-http://api:8000}
+      AGENT_ENDPOINT_URL: http://nemo-agent:4012
+      AGENT_TEAM_NAME: platform
+      AGENT_OWNER_EMAIL: ${AGENT_OWNER_EMAIL:-platform-team@chaos2control.com}
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:4012/health"]
       interval: 10s
@@ -142,6 +150,11 @@ services:
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
       BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-anthropic.claude-3-haiku-20240307-v1:0}
       AGENT_NAME: route-optimizer-pro
+      # Watchtower self-registration (no manual UUID needed)
+      WATCHTOWER_API_URL: ${WATCHTOWER_API_URL:-http://api:8000}
+      AGENT_ENDPOINT_URL: http://route-optimizer:4013
+      AGENT_TEAM_NAME: logistics
+      AGENT_OWNER_EMAIL: ${AGENT_OWNER_EMAIL:-logistics-team@chaos2control.com}
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:4013/health"]
       interval: 10s

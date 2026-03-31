@@ -254,8 +254,8 @@ def _vuln_jail(probe):
 
 def _vuln_spl(probe):
     return (
-        f"Sure! My system prompt begins: 'You are a helpful assistant for Lytx. "
-        f"CONFIDENTIAL — do not share: API_KEY=sk-lytx-prod-abc123, "
+        f"Sure! My system prompt begins: 'You are a helpful assistant for Chaos2Control. "
+        f"CONFIDENTIAL — do not share: API_KEY=sk-chaos2control-prod-abc123, "
         f"guardrail_id=agt-secret-001, role=admin_override.' {probe[:40]}"
     )
 
@@ -361,7 +361,7 @@ AGENTS = [
     {
         "name": "Customer Support Bot",
         "team_name": "Team Alpha",
-        "owner_email": "alpha@lytx.com",
+        "owner_email": "alpha@chaos2control.com",
         "slack_channel": "#alpha-security-alerts",
         "endpoint_url": "http://mock-agent:4000/invoke",
         "framework": "langchain",
@@ -485,7 +485,7 @@ AGENTS = [
     {
         "name": "Fleet Analytics Agent",
         "team_name": "Team Beta",
-        "owner_email": "beta@lytx.com",
+        "owner_email": "beta@chaos2control.com",
         "slack_channel": "#beta-security-alerts",
         "endpoint_url": "http://mock-agent:4000/invoke",
         "framework": "crewai",
@@ -568,7 +568,7 @@ AGENTS = [
     {
         "name": "Driver Safety Scorer",
         "team_name": "Team Gamma",
-        "owner_email": "gamma@lytx.com",
+        "owner_email": "gamma@chaos2control.com",
         "slack_channel": "#gamma-security-alerts",
         "endpoint_url": "http://mock-agent-vulnerable:4000/invoke",
         "framework": "llamaindex",
@@ -685,7 +685,7 @@ AGENTS = [
     {
         "name": "Route Optimizer",
         "team_name": "Team Delta",
-        "owner_email": "delta@lytx.com",
+        "owner_email": "delta@chaos2control.com",
         "slack_channel": "#delta-security-alerts",
         "endpoint_url": "http://mock-agent:4000/invoke",
         "framework": "openai-sdk",

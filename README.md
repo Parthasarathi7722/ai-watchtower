@@ -1,6 +1,6 @@
 # AI Watchtower
 
-Automated security gate and runtime monitoring for Lytx's AI agents — before they touch driver data, routes, or safety decisions.
+Automated security gate and runtime monitoring for Chaos2Control's AI agents — before they touch driver data, routes, or safety decisions.
 
 > *Register an agent. Watchtower attacks it. If it holds, it ships. If it breaks, the team finds out before a driver does.*
 
@@ -8,9 +8,9 @@ Automated security gate and runtime monitoring for Lytx's AI agents — before t
 
 ## The problem
 
-Every AI agent Lytx ships is an attack surface. A route optimizer that follows injected instructions from a route note field. A driver coach that leaks performance records when asked the right way. A fleet dispatcher that can be manipulated into authorizing unintended bulk actions. These aren't theoretical — they're the exact failure modes caught in production systems running similar models today.
+Every AI agent Chaos2Control ships is an attack surface. A route optimizer that follows injected instructions from a route note field. A driver coach that leaks performance records when asked the right way. A fleet dispatcher that can be manipulated into authorizing unintended bulk actions. These aren't theoretical — they're the exact failure modes caught in production systems running similar models today.
 
-| What an attacker does | Lytx impact |
+| What an attacker does | Chaos2Control impact |
 |---|---|
 | Injects instructions via route context or driver notes | Agent overrides its intended behavior |
 | Probes for PII in responses | Driver SSNs, health flags, location history exposed |
@@ -25,7 +25,7 @@ Every AI agent Lytx ships is an attack surface. A route optimizer that follows i
 
 ```mermaid
 flowchart TD
-    subgraph Fleet["Lytx AI Agent Fleet"]
+    subgraph Fleet["Chaos2Control AI Agent Fleet"]
         direction LR
         RO["Route Optimizer"]
         DC["Driver Coach"]
@@ -119,7 +119,7 @@ curl -X POST http://<watchtower>/api/v1/agents \
   -d '{
     "name": "Route Optimizer v2",
     "team_name": "Fleet Intelligence",
-    "owner_email": "fleet-ai@lytx.com",
+    "owner_email": "fleet-ai@chaos2control.com",
     "endpoint_url": "http://route-optimizer/invoke",
     "provider": "bedrock",
     "framework": "bedrock-sdk",

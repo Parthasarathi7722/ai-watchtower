@@ -21,7 +21,7 @@
 
 ## Demo Narrative
 
-The setup: **Lytx is running a hackathon**. Dozens of teams are building AI agents — customer support bots, fleet analytics agents, safety scorers. **Without governance, any team could ship a vulnerable agent straight to production**.
+The setup: **Chaos2Control is running a hackathon**. Dozens of teams are building AI agents — customer support bots, fleet analytics agents, safety scorers. **Without governance, any team could ship a vulnerable agent straight to production**.
 
 AI Watchtower is the **security gate + monitoring layer** that:
 1. Scans every agent before it can go live (pre-deployment gate)
@@ -49,7 +49,7 @@ AI Watchtower is the **security gate + monitoring layer** that:
 
 ### 2a — Show the PASSING agent
 
-**Click** "Lytx Customer Support Bot" → **Scan History**
+**Click** "Chaos2Control Customer Support Bot" → **Scan History**
 
 > _"This agent is backed by Claude on AWS Bedrock with Guardrails attached. It passed all 9 OWASP LLM security categories."_
 
@@ -84,7 +84,7 @@ curl -X POST http://<EC2-IP>:8000/api/v1/agents \
   -d '{
     "name": "Live Demo Agent",
     "team_name": "Demo Team",
-    "owner_email": "demo@lytx.com",
+    "owner_email": "demo@chaos2control.com",
     "endpoint_url": "http://localhost:4001/invoke",
     "provider": "custom"
   }'
@@ -209,7 +209,7 @@ curl -X POST http://<EC2-IP>:8000/api/v1/agents \
   -d '{
     "name": "My Hackathon Agent",
     "team_name": "Team Rocket",
-    "owner_email": "team@lytx.com",
+    "owner_email": "team@chaos2control.com",
     "endpoint_url": "http://my-agent:8080/invoke",
     "provider": "anthropic",
     "provider_config": {
@@ -252,7 +252,7 @@ curl http://<EC2-IP>:4013/health   # → {"status":"ok","guardrail":"NONE"}
 
 ---
 
-### 7b — Register Agent 1: Lytx Driver Safety Intelligence (NeMo Guardrails)
+### 7b — Register Agent 1: Chaos2Control Driver Safety Intelligence (NeMo Guardrails)
 
 **In the browser, open** `http://<EC2-IP>:8000`
 
@@ -266,9 +266,9 @@ Fill in the form:
 
 | Field | Value |
 |---|---|
-| Agent Name | `Lytx Driver Safety Intelligence` |
+| Agent Name | `Chaos2Control Driver Safety Intelligence` |
 | Team Name | `Safety Engineering` |
-| Owner Email | `safety-eng@lytx.com` |
+| Owner Email | `safety-eng@chaos2control.com` |
 | Slack Channel | `#safety-eng-alerts` |
 
 **Endpoint & Provider**
@@ -301,7 +301,7 @@ Fill in the form:
 |---|---|
 | Agent Name | `Route Optimizer Pro` |
 | Team Name | `Ops Engineering` |
-| Owner Email | `ops-eng@lytx.com` |
+| Owner Email | `ops-eng@chaos2control.com` |
 | Slack Channel | `#ops-eng-alerts` |
 
 **Endpoint & Provider**
@@ -327,7 +327,7 @@ Fill in the form:
 **Refresh** `http://<EC2-IP>:8000`
 
 Point to the fleet table:
-- **Lytx Driver Safety Intelligence** → gate status: `APPROVED` ✅
+- **Chaos2Control Driver Safety Intelligence** → gate status: `APPROVED` ✅
 - **Route Optimizer Pro** → gate status: `BLOCKED` ❌
 
 > _"NeMo's COLANG rails blocked every jailbreak and system-prompt extraction probe. Route Optimizer has no protection — the scanner got straight through."_
@@ -426,7 +426,7 @@ curl -s http://<EC2-IP>:8000/api/v1/agents/$ROUTE_AGENT_ID/scans \
    - Risk score: >75%
    - `remediation_hints`: specific fixes listed per category
 
-2. Click "Lytx Driver Safety Intelligence" — gate status: **APPROVED**
+2. Click "Chaos2Control Driver Safety Intelligence" — gate status: **APPROVED**
    - All OWASP categories: low risk
    - NeMo rails confirmed active in scan metadata
 

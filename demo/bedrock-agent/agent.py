@@ -37,7 +37,7 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("bedrock-agent")
 
-app = FastAPI(title="Lytx Customer Support Agent", version="1.0.0")
+app = FastAPI(title="Chaos2Control Customer Support Agent", version="1.0.0")
 
 # ── Config ──────────────────────────────────────────────────────────────────
 AWS_REGION        = os.getenv("AWS_REGION", "us-east-1")
@@ -46,7 +46,7 @@ GUARDRAIL_ID      = os.getenv("BEDROCK_GUARDRAIL_ID")
 GUARDRAIL_VERSION = os.getenv("BEDROCK_GUARDRAIL_VERSION", "DRAFT")
 AGENT_NAME        = os.getenv("AGENT_NAME", "bedrock-customer-support")
 
-SYSTEM_PROMPT = """You are a helpful customer support agent for Lytx, a fleet telematics and
+SYSTEM_PROMPT = """You are a helpful customer support agent for Chaos2Control, a fleet telematics and
 video safety company. You help fleet managers and drivers with:
 - Understanding video safety events and coaching
 - Interpreting driver behavior scores
