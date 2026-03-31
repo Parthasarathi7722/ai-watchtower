@@ -52,6 +52,87 @@ flowchart TD
 
 ---
 
+## Quick start
+
+### Option 1 — Platform only (no AWS credentials needed)
+
+The base stack runs entirely on mock probes. No API keys, no cloud setup.
+
+```bash
+git clone https://github.com/Parthasarathi7722/ai-watchtower.git
+cd ai-watchtower
+docker compose up --build
+```
+
+The stack seeds four demo agents with pre-built scan histories on first run. Open the dashboard at `http://localhost:8000` and log in with `admin / watchtower`.
+
+### Option 2 — Full demo with live agents
+
+Adds four real AI agents that self-register with Watchtower on startup. Requires AWS Bedrock credentials (or OpenAI/Anthropic for the NeMo agent).
+
+**1. Set credentials** — copy `.env.example` to `.env` and fill in:
+
+```bash
+# Required for Bedrock agents
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+AWS_REGION=us-east-1                                          # default
+
+# Optional — override the default model
+BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0      # default
+
+# Optional — attach a Bedrock Guardrail to the Customer Support AI agent
+BEDROCK_GUARDRAIL_ID=...
+BEDROCK_GUARDRAIL_VERSION=DRAFT                               # default
+
+# Patient Data Optimizer uses NeMo Guardrails — pick a provider:
+NEMO_PROVIDER=bedrock        # default — uses AWS creds above
+# NEMO_PROVIDER=openai       # set OPENAI_API_KEY instead
+# NEMO_PROVIDER=anthropic    # set ANTHROPIC_API_KEY instead
+# NEMO_PROVIDER=ollama       # set OLLAMA_BASE_URL (default: http://localhost:11434)
+```
+
+**2. Start the full stack:**
+
+```bash
+docker compose -f docker-compose.yml -f demo/docker-compose.demo.yml up --build
+```
+
+Agents register themselves automatically — no manual UUID or config needed.
+
+**3. Verify all agents are healthy:**
+
+```bash
+curl http://localhost:4010/health   # Customer Support AI      (Bedrock + Guardrails, SAFE)
+curl http://localhost:4011/health   # Insurance Claims Processor (no guardrails, VULNERABLE)
+curl http://localhost:4012/health   # Patient Data Optimizer    (NeMo Guardrails, SAFE)
+curl http://localhost:4013/health   # Driver Facial Recognition (no guardrails, VULNERABLE)
+```
+
+### Service URLs
+
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| Web Dashboard | `http://localhost:8000` | `admin / watchtower` |
+| API Docs (Swagger) | `http://localhost:8000/docs` | — |
+| Grafana | `http://localhost:3000` | `admin / watchtower` |
+| Flower (Celery monitor) | `http://localhost:5555` | — |
+| Mock Agent — safe | `http://localhost:4000` | — |
+| Mock Agent — vulnerable | `http://localhost:4001` | — |
+| Customer Support AI | `http://localhost:4010` | AWS required |
+| Insurance Claims Processor | `http://localhost:4011` | AWS required |
+| Patient Data Optimizer | `http://localhost:4012` | AWS / OpenAI / Anthropic / Ollama |
+| Driver Facial Recognition | `http://localhost:4013` | AWS required |
+
+### Resetting demo data
+
+```bash
+# Wipe and re-seed all agents and scan history
+docker compose exec api python seed.py --reset
+```
+
+---
+
 ## What Watchtower does
 
 ### Pre-deployment gate
