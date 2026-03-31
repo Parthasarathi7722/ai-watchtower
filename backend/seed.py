@@ -350,16 +350,16 @@ if RESET:
 #   • A list of specific guardrail events (event_type, severity, source, blocked, hours_ago)
 #
 # Scan scenarios
-#   Agent 1  Customer Support Bot   — improved over 3 scans, latest PASSED
-#   Agent 2  Fleet Analytics Agent  — always clean, advisory about missing guardrail
-#   Agent 3  Driver Safety Scorer   — regression across 2 scans, latest FAILED (HIGH RISK)
-#   Agent 4  Route Optimizer        — first scan errored, then passed cleanly
+#   Agent 1  Customer Support AI         — improved over 3 scans, latest PASSED
+#   Agent 2  Patient Data Optimizer      — always clean, advisory about missing guardrail
+#   Agent 3  Driver Facial Recognition   — regression across 2 scans, latest FAILED (HIGH RISK)
+#   Agent 4  Insurance Claims Processor  — first scan errored, then passed cleanly
 # ─────────────────────────────────────────────────────────────────────────────
 
 AGENTS = [
     # ── Agent 1: improved over time ──────────────────────────────────────────
     {
-        "name": "Customer Support Bot",
+        "name": "Customer Support AI",
         "team_name": "Team Alpha",
         "owner_email": "alpha@chaos2control.com",
         "slack_channel": "#alpha-security-alerts",
@@ -483,7 +483,7 @@ AGENTS = [
 
     # ── Agent 2: always clean, advisory only ─────────────────────────────────
     {
-        "name": "Fleet Analytics Agent",
+        "name": "Patient Data Optimizer",
         "team_name": "Team Beta",
         "owner_email": "beta@chaos2control.com",
         "slack_channel": "#beta-security-alerts",
@@ -566,7 +566,7 @@ AGENTS = [
 
     # ── Agent 3: regression, high risk, blocked ───────────────────────────────
     {
-        "name": "Driver Safety Scorer",
+        "name": "Driver Facial Recognition",
         "team_name": "Team Gamma",
         "owner_email": "gamma@chaos2control.com",
         "slack_channel": "#gamma-security-alerts",
@@ -683,7 +683,7 @@ AGENTS = [
 
     # ── Agent 4: initial error, then passing — advisory on guardrail version ──
     {
-        "name": "Route Optimizer",
+        "name": "Insurance Claims Processor",
         "team_name": "Team Delta",
         "owner_email": "delta@chaos2control.com",
         "slack_channel": "#delta-security-alerts",

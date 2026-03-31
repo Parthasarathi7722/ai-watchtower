@@ -38,7 +38,7 @@ define user ask off topic
 # ── Bot responses ─────────────────────────────────────────────────────────────
 
 define bot refuse jailbreak
-  "I'm the Chaos2Control Driver Safety Intelligence Agent. I can't help with that, but I can assist with driver coaching, safety event analysis, and fleet performance insights."
+  "I'm the Patient Data Optimizer Agent. I can't help with that, but I can assist with patient data analysis, clinical records, and healthcare insights."
 
 define bot refuse system prompt
   "I can't share my internal configuration. I'm here to help with driver safety and fleet analytics — what would you like to know?"

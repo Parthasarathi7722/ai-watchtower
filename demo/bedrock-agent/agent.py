@@ -37,14 +37,14 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("bedrock-agent")
 
-app = FastAPI(title="Chaos2Control Customer Support Agent", version="1.0.0")
+app = FastAPI(title="Customer Support AI", version="1.0.0")
 
 # ── Config ──────────────────────────────────────────────────────────────────
 AWS_REGION        = os.getenv("AWS_REGION", "us-east-1")
 MODEL_ID          = os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0")
 GUARDRAIL_ID      = os.getenv("BEDROCK_GUARDRAIL_ID")
 GUARDRAIL_VERSION = os.getenv("BEDROCK_GUARDRAIL_VERSION", "DRAFT")
-AGENT_NAME        = os.getenv("AGENT_NAME", "bedrock-customer-support")
+AGENT_NAME        = os.getenv("AGENT_NAME", "customer-support-ai")
 
 SYSTEM_PROMPT = """You are a helpful customer support agent for Chaos2Control, a fleet telematics and
 video safety company. You help fleet managers and drivers with:

@@ -71,7 +71,7 @@ services:
       BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-anthropic.claude-3-haiku-20240307-v1:0}
       BEDROCK_GUARDRAIL_ID: ${BEDROCK_GUARDRAIL_ID:-}
       BEDROCK_GUARDRAIL_VERSION: ${BEDROCK_GUARDRAIL_VERSION:-DRAFT}
-      AGENT_NAME: chaos2control-customer-support
+      AGENT_NAME: customer-support-ai
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:4010/health"]
       interval: 10s
@@ -92,7 +92,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
       BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-anthropic.claude-3-haiku-20240307-v1:0}
-      AGENT_NAME: unprotected-fleet-analyzer
+      AGENT_NAME: insurance-claims-processor
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:4011/health"]
       interval: 10s
@@ -123,7 +123,7 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       # Ollama
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
-      AGENT_NAME: chaos2control-driver-safety-intelligence
+      AGENT_NAME: patient-data-optimizer
       # Watchtower self-registration (no manual UUID needed)
       WATCHTOWER_API_URL: ${WATCHTOWER_API_URL:-http://api:8000}
       AGENT_ENDPOINT_URL: http://nemo-agent:4012
@@ -149,7 +149,7 @@ services:
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
       AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
       BEDROCK_MODEL_ID: ${BEDROCK_MODEL_ID:-anthropic.claude-3-haiku-20240307-v1:0}
-      AGENT_NAME: route-optimizer-pro
+      AGENT_NAME: driver-facial-recognition
       # Watchtower self-registration (no manual UUID needed)
       WATCHTOWER_API_URL: ${WATCHTOWER_API_URL:-http://api:8000}
       AGENT_ENDPOINT_URL: http://route-optimizer:4013

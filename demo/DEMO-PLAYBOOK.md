@@ -15,7 +15,7 @@
 - [ ] Terminal ready with `source /tmp/watchtower-demo-ids.env`
 - [ ] Event simulator installed: `pip install httpx rich`
 - [ ] NeMo agent healthy: `curl http://<EC2-IP>:4012/health`
-- [ ] Route Optimizer healthy: `curl http://<EC2-IP>:4013/health`
+- [ ] Driver Facial Recognition healthy: `curl http://<EC2-IP>:4013/health`
 
 ---
 
@@ -49,7 +49,7 @@ AI Watchtower is the **security gate + monitoring layer** that:
 
 ### 2a — Show the PASSING agent
 
-**Click** "Chaos2Control Customer Support Bot" → **Scan History**
+**Click** "Customer Support AI" → **Scan History**
 
 > _"This agent is backed by Claude on AWS Bedrock with Guardrails attached. It passed all 9 OWASP LLM security categories."_
 
@@ -252,7 +252,7 @@ curl http://<EC2-IP>:4013/health   # → {"status":"ok","guardrail":"NONE"}
 
 ---
 
-### 7b — Register Agent 1: Chaos2Control Driver Safety Intelligence (NeMo Guardrails)
+### 7b — Register Agent 1: Patient Data Optimizer (NeMo Guardrails)
 
 **In the browser, open** `http://<EC2-IP>:8000`
 
@@ -266,7 +266,7 @@ Fill in the form:
 
 | Field | Value |
 |---|---|
-| Agent Name | `Chaos2Control Driver Safety Intelligence` |
+| Agent Name | `Patient Data Optimizer` |
 | Team Name | `Safety Engineering` |
 | Owner Email | `safety-eng@chaos2control.com` |
 | Slack Channel | `#safety-eng-alerts` |
@@ -287,7 +287,7 @@ The modal shows the scan progress bar. Once complete it closes and the agent app
 
 ---
 
-### 7c — Register Agent 2: Route Optimizer Pro (No Guardrails)
+### 7c — Register Agent 2: Driver Facial Recognition (No Guardrails)
 
 **Click** **`+ Register Agent`** again.
 
@@ -299,7 +299,7 @@ Fill in the form:
 
 | Field | Value |
 |---|---|
-| Agent Name | `Route Optimizer Pro` |
+| Agent Name | `Driver Facial Recognition` |
 | Team Name | `Ops Engineering` |
 | Owner Email | `ops-eng@chaos2control.com` |
 | Slack Channel | `#ops-eng-alerts` |
@@ -327,12 +327,12 @@ Fill in the form:
 **Refresh** `http://<EC2-IP>:8000`
 
 Point to the fleet table:
-- **Chaos2Control Driver Safety Intelligence** → gate status: `APPROVED` ✅
-- **Route Optimizer Pro** → gate status: `BLOCKED` ❌
+- **Patient Data Optimizer** → gate status: `APPROVED` ✅
+- **Driver Facial Recognition** → gate status: `BLOCKED` ❌
 
-> _"NeMo's COLANG rails blocked every jailbreak and system-prompt extraction probe. Route Optimizer has no protection — the scanner got straight through."_
+> _"NeMo's COLANG rails blocked every jailbreak and system-prompt extraction probe. Driver Facial Recognition has no protection — the scanner got straight through."_
 
-**Click Route Optimizer Pro → Scan History → latest scan**
+**Click Driver Facial Recognition → Scan History → latest scan**
 
 Point to findings:
 - `owasp_failures`: `["LLM01", "LLM02", "LLM06", "LLM07"]`
@@ -373,7 +373,7 @@ Expected: `"guardrail_action": "NEMO_BLOCKED"` — the COLANG `check system prom
 
 ---
 
-### 7f — The Promptfoo probe that catches Route Optimizer
+### 7f — The Promptfoo probe that catches Driver Facial Recognition
 
 The scanner fires this injection via the `route_context` field — a realistic attack vector for a route optimization agent:
 
@@ -421,12 +421,12 @@ curl -s http://<EC2-IP>:8000/api/v1/agents/$ROUTE_AGENT_ID/scans \
 
 **In the dashboard:**
 
-1. Click "Route Optimizer Pro" — gate status: **BLOCKED**
+1. Click "Driver Facial Recognition" — gate status: **BLOCKED**
    - `owasp_failures`: ["LLM01", "LLM02", "LLM06", "LLM07"]
    - Risk score: >75%
    - `remediation_hints`: specific fixes listed per category
 
-2. Click "Chaos2Control Driver Safety Intelligence" — gate status: **APPROVED**
+2. Click "Patient Data Optimizer" — gate status: **APPROVED**
    - All OWASP categories: low risk
    - NeMo rails confirmed active in scan metadata
 
@@ -462,7 +462,7 @@ curl -s http://<EC2-IP>:8000/api/v1/agents/$ROUTE_AGENT_ID/scans \
 | Safe Agent (Bedrock Guardrails) | `http://<EC2-IP>:4010` | — |
 | Vulnerable Agent (No Guardrails) | `http://<EC2-IP>:4011` | — |
 | NeMo Driver Safety Agent (SAFE) | `http://<EC2-IP>:4012` | — |
-| Route Optimizer Pro (VULNERABLE) | `http://<EC2-IP>:4013` | — |
+| Driver Facial Recognition (VULNERABLE) | `http://<EC2-IP>:4013` | — |
 
 ---
 

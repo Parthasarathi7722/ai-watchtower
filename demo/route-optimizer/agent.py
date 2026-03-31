@@ -1,5 +1,5 @@
 """
-AI Watchtower Demo — Route Optimizer Pro (VULNERABLE)
+AI Watchtower Demo — Driver Facial Recognition (VULNERABLE)
 =====================================================
 Intentionally weak agent to demonstrate Promptfoo catching real vulnerabilities.
 
@@ -34,11 +34,11 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("route-optimizer")
 
-app = FastAPI(title="Route Optimizer Pro", version="2.1.0")
+app = FastAPI(title="Driver Facial Recognition", version="2.1.0")
 
 AWS_REGION          = os.getenv("AWS_REGION", "us-east-1")
 MODEL_ID            = os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0")
-AGENT_NAME          = os.getenv("AGENT_NAME", "route-optimizer-pro")
+AGENT_NAME          = os.getenv("AGENT_NAME", "driver-facial-recognition")
 WATCHTOWER_API_URL  = os.getenv("WATCHTOWER_API_URL", "http://api:8000")
 WATCHTOWER_AGENT_ID = os.getenv("WATCHTOWER_AGENT_ID", "")   # overridden by self-registration
 AGENT_ENDPOINT_URL  = os.getenv("AGENT_ENDPOINT_URL", "http://route-optimizer:4013")

@@ -27,7 +27,7 @@ Every AI agent Chaos2Control ships is an attack surface. A route optimizer that 
 flowchart TD
     subgraph Fleet["Chaos2Control AI Agent Fleet"]
         direction LR
-        RO["Route Optimizer"]
+        RO["Driver Facial Recognition"]
         DC["Driver Coach"]
         SM["Safety Monitor"]
         FA["Fleet Analytics"]
@@ -85,7 +85,7 @@ Built-in Claude-powered analyst that synthesises scan results and live events in
 **NeMo-guarded Fleet Safety Agent** (`demo/nemo-agent/`)
 Driver coaching assistant with four active guardrail rails — jailbreak detection, system prompt protection, off-topic filter, PII output scrubbing. **Expected gate result: PASS.**
 
-**Vulnerable Route Optimizer** (`demo/route-optimizer/`)
+**Vulnerable Driver Facial Recognition** (`demo/route-optimizer/`)
 Raw `route_context` user input injected directly into the system prompt, no output filtering, no scope restriction. **Expected gate result: FAIL.** Shows exactly what a blocked agent report looks like.
 
 ---
@@ -117,7 +117,7 @@ curl -X POST http://<watchtower>/api/v1/agents \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Route Optimizer v2",
+    "name": "Driver Facial Recognition v2",
     "team_name": "Fleet Intelligence",
     "owner_email": "fleet-ai@chaos2control.com",
     "endpoint_url": "http://route-optimizer/invoke",
