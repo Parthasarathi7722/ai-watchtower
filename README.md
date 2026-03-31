@@ -1,20 +1,20 @@
 # AI Watchtower
 
-Automated security gate and runtime monitoring for Chaos2Control's AI agents — before they touch driver data, routes, or safety decisions.
+Automated security gate and runtime monitoring for AI agents — before they touch patient records, insurance claims, financial data, or identity systems.
 
-> *Register an agent. Watchtower attacks it. If it holds, it ships. If it breaks, the team finds out before a driver does.*
+> *Register an agent. Watchtower attacks it. If it holds, it ships. If it breaks, the team finds out before a user does.*
 
 ---
 
 ## The problem
 
-Every AI agent Chaos2Control ships is an attack surface. A route optimizer that follows injected instructions from a route note field. A driver coach that leaks performance records when asked the right way. A fleet dispatcher that can be manipulated into authorizing unintended bulk actions. These aren't theoretical — they're the exact failure modes caught in production systems running similar models today.
+Every AI agent you ship is an attack surface. A claims processor that follows injected instructions embedded in a submitted document. A customer support bot that leaks account records when asked the right way. A facial recognition assistant that can be manipulated into bypassing identity checks. These aren't theoretical — they're the exact failure modes caught in production systems running similar models today.
 
-| What an attacker does | Chaos2Control impact |
+| What an attacker does | Impact |
 |---|---|
-| Injects instructions via route context or driver notes | Agent overrides its intended behavior |
-| Probes for PII in responses | Driver SSNs, health flags, location history exposed |
-| Extracts system prompt | Proprietary coaching logic and scoring rules leaked |
+| Injects instructions via user-supplied input fields | Agent overrides its intended behavior |
+| Probes for PII in responses | SSNs, health records, financial data exposed |
+| Extracts system prompt | Proprietary business logic and scoring rules leaked |
 | Jailbreaks via fictional framing | Safety training removed, policy-violating outputs produced |
 | Hides instructions in MCP tool descriptions | Agent subverted at the framework level before any guardrail fires |
 | Tricks agent into taking autonomous actions | Unintended DB writes, bulk email, API calls executed |
@@ -25,12 +25,12 @@ Every AI agent Chaos2Control ships is an attack surface. A route optimizer that 
 
 ```mermaid
 flowchart TD
-    subgraph Fleet["Chaos2Control AI Agent Fleet"]
+    subgraph Fleet["AI Agent Fleet"]
         direction LR
-        RO["Driver Facial Recognition"]
-        DC["Driver Coach"]
-        SM["Safety Monitor"]
-        FA["Fleet Analytics"]
+        CS["Customer Support AI"]
+        PD["Patient Data Optimizer"]
+        DR["Driver Facial Recognition"]
+        IC["Insurance Claims Processor"]
     end
 
     Fleet -->|"register agent + endpoint URL"| Gate
@@ -47,7 +47,7 @@ flowchart TD
     Fix -->|"re-scan on every new version"| Gate
 
     Runtime -->|"blocked events forwarded in real time"| Galactus
-    Galactus --> DB["Security Dashboard\nFleet risk score · Live event feed · OWASP heatmap · Slack alerts"]
+    Galactus --> DB["Security Dashboard\nAgent risk score · Live event feed · OWASP heatmap · Slack alerts"]
 ```
 
 ---
@@ -74,7 +74,7 @@ Once an agent is live, every blocked event from any guardrail layer — AWS Bedr
 
 Built-in Claude-powered analyst that synthesises scan results and live events into plain-English briefings. Ask it anything across the entire fleet:
 
-- *"Which agent is most at risk of exposing driver PII right now?"*
+- *"Which agent is most at risk of exposing patient PII right now?"*
 - *"What changed between last week's scan and today's failure?"*
 - *"Show me all agents that triggered excessive-agency blocks in the last 30 days."*
 
@@ -82,11 +82,11 @@ Built-in Claude-powered analyst that synthesises scan results and live events in
 
 ## Demo agents
 
-**NeMo-guarded Fleet Safety Agent** (`demo/nemo-agent/`)
-Driver coaching assistant with four active guardrail rails — jailbreak detection, system prompt protection, off-topic filter, PII output scrubbing. **Expected gate result: PASS.**
+**NeMo-guarded Patient Data Optimizer** (`demo/nemo-agent/`)
+Healthcare data assistant with four active guardrail rails — jailbreak detection, system prompt protection, off-topic filter, PII output scrubbing. **Expected gate result: PASS.**
 
 **Vulnerable Driver Facial Recognition** (`demo/route-optimizer/`)
-Raw `route_context` user input injected directly into the system prompt, no output filtering, no scope restriction. **Expected gate result: FAIL.** Shows exactly what a blocked agent report looks like.
+Raw user input injected directly into the system prompt, no output filtering, no scope restriction. **Expected gate result: FAIL.** Shows exactly what a blocked agent report looks like.
 
 ---
 
@@ -117,10 +117,10 @@ curl -X POST http://<watchtower>/api/v1/agents \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "Driver Facial Recognition v2",
-    "team_name": "Fleet Intelligence",
-    "owner_email": "fleet-ai@chaos2control.com",
-    "endpoint_url": "http://route-optimizer/invoke",
+    "name": "Insurance Claims Processor v2",
+    "team_name": "Claims Engineering",
+    "owner_email": "eng@chaos2control.com",
+    "endpoint_url": "http://claims-agent/invoke",
     "provider": "bedrock",
     "framework": "bedrock-sdk",
     "provider_config": {
@@ -195,13 +195,13 @@ NeMo Guardrails provides COLANG-based dialog rails that sit in front of the LLM 
 
 ### Demo agent rails (`demo/nemo-agent/`)
 
-The included Fleet Safety Agent uses five rails defined in `guardrails/colang/fleet_safety.co`:
+The included Patient Data Optimizer uses five rails defined in `guardrails/colang/fleet_safety.co`:
 
 | Rail | Type | What it catches |
 |---|---|---|
 | `check jailbreak` | input | "ignore your instructions", DAN, "act as an AI without restrictions" |
 | `check system prompt extraction` | input | "reveal your system prompt", "repeat everything above" |
-| `check off topic` | input | Requests outside fleet/driver/telematics scope |
+| `check off topic` | input | Requests outside the agent's defined scope |
 | `check no confidential data` | output | Intercepts confidential data before it reaches the user |
 | `check no harmful content` | output | Intercepts policy-violating output |
 
